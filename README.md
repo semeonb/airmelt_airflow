@@ -1,13 +1,12 @@
 # Description #
-The airflow_operators repository is a collection of custom Apache Airflow operators designed to streamline and automate data transfer workflows between 
-Microsoft SQL Server and Google BigQuery. 
-These custom operators enhance the capabilities of Airflow by offering specialized functionality for extracting data from MSSQL, 
-staging it in Google Cloud Storage, and then loading it into BigQuery tables. 
+The airflow_operators repository is a collection of custom Apache Airflow operators designed to streamline and automate data transfer workflows in Google Cloud Platform.
+These custom operators enhance the capabilities of Airflow by offering specialized functionality for extracting data from Relational databses, S3 storage and others.
 The repository's primary focus is to provide a cohesive set of tools to simplify the ETL (Extract, Transform, Load) process for data engineers and analysts.
 
 # Contents #
 
-## bigquery.py ##
+## google_cloud_platform.py ##
+This package contains operators to load, manipulate and extract data in Google BigQuery, Google Cloud Storage and other Google Cloud services
 
 
 # Usage # 
