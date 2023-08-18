@@ -211,18 +211,18 @@ class MSSQLToBigQueryOperator(BaseOperator):
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
         gcs_folder, _ = os.path.split(self.filename)
+        if self.shard_data:
+            filename_formatted = self.filename + "_{}"
+        else:
+            filename_formatted = self.filename
+        if self.file_format == "json":
+            source_format = NEWLINE_DELIMITED_JSON
+            full_filename = filename_formatted + ".json"
+        else:
+            source_format = CSV
+            full_filename = filename_formatted + ".csv"
         if serialize_process_list == [] or self.task_id in serialize_process_list:
             try:
-                if self.shard_data:
-                    filename_formatted = self.filename + "_{}"
-                else:
-                    filename_formatted = self.filename
-                if self.file_format == "json":
-                    source_format = NEWLINE_DELIMITED_JSON
-                    full_filename = filename_formatted + ".json"
-                else:
-                    source_format = CSV
-                    full_filename = filename_formatted + ".csv"
                 self.log.info(
                     "Executing transfer task {tsk} to file {fl}".format(
                         self.task_id, fl=self.filename
@@ -256,7 +256,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     allow_jagged_rows=self.allow_jagged_rows,
                     dag=self.dag,
                     google_cloud_storage_conn_id=self.gcp_conn_id,
-                )
+                ).execute(context)
             except Exception as ex:
                 self.log.error(
                     "Could not load data from MSSQL {tsk}: {ex}".format(
@@ -271,7 +271,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                         prefix="gs://" + gcs_folder,
                         dag=self.dag,
                         google_cloud_storage_conn_id=self.gcp_conn_id,
-                    )
+                    ).execute(context)
                 except Exception as ex:
                     self.logger.error(
                         "Could not delete GS files in {}".format("gs://" + gcs_folder)
