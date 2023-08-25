@@ -5,12 +5,7 @@ The repository's primary focus is to provide a cohesive set of tools to simplify
 
 # Installation #
 
-## Install submodule through Git ##
-In parent folder:
-`git submodule add git@github.com:semeonb/airflow_operators.git`
-
-`git submodule update --init --recursive`
-
+`pip install --ignore-installed git+ssh://git@github.com/semeonb/airflow_operators.git`
 
 # Contents #
 
