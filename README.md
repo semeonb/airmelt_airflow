@@ -3,6 +3,15 @@ The airflow_operators repository is a collection of custom Apache Airflow operat
 These custom operators enhance the capabilities of Airflow by offering specialized functionality for extracting data from Relational databses, S3 storage and others.
 The repository's primary focus is to provide a cohesive set of tools to simplify the ETL (Extract, Transform, Load) process for data engineers and analysts.
 
+# Installation #
+
+## Install submodule through Git ##
+In parent folder:
+`git submodule add git@github.com:semeonb/airflow_operators.git`
+
+`git submodule update --init --recursive`
+
+
 # Contents #
 
 ## google_cloud_platform.py ##
@@ -18,3 +27,4 @@ enhance data analytics pipelines, and make informed decisions based on fresh, in
 Contributions from the open-source community are welcome. 
 Users can extend the functionality of existing operators or propose new operators 
 that align with the goals of simplifying data integration and transformation tasks within the context of Apache Airflow.
+
