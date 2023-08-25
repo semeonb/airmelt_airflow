@@ -1,3 +1,5 @@
+# The purpose of this package is to create custom operators for Google Cloud Platform
+
 import logging
 import os
 import json
@@ -13,8 +15,10 @@ NEWLINE_DELIMITED_JSON = "NEWLINE_DELIMITED_JSON"
 CSV = "CSV"
 
 
-def get_schema(schema_file):
+def _get_schema(schema_file):
     """
+    The get_schema function takes the path to a JSON schema file as input and returns a json object that contains all columns needed for the BigQuery table.
+
     schema_file: the path of the JSON file containing the schema.
     """
     logger = logging.getLogger(__name__)
@@ -37,7 +41,7 @@ def get_schema(schema_file):
 
 def generate_schema_from_file(self, schema_file):
     # Get the JSON object from the schema file
-    json_object = get_schema(schema_file)
+    json_object = _get_schema(schema_file)
 
     # Initialize an empty list to hold the generated schema fields
     schema = []
@@ -169,9 +173,9 @@ class MSSQLToBigQueryOperator(BaseOperator):
         sql,
         bucket,
         filename: str,
-        schema_filename,
         destination_project_id,
         destination_table_id,
+        schema_filename=None,
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
         file_format="json",
@@ -205,12 +209,15 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.allow_jagged_rows = allow_jagged_rows
         self.shard_data = shard_data
         self.delete_files_after_import = delete_files_after_import
-
-        self.log = logging.getLogger(__name__)
+        self.task_id = kwargs.get("task_id")
 
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
         gcs_folder, _ = os.path.split(self.filename)
+        if self.schema_filename:
+            autodetect=False
+        else:
+            autodetect=True
         if self.shard_data:
             filename_formatted = self.filename + "_{}"
         else:
@@ -225,11 +232,12 @@ class MSSQLToBigQueryOperator(BaseOperator):
             try:
                 self.log.info(
                     "Executing transfer task {tsk} to file {fl}".format(
-                        self.task_id, fl=self.filename
+                        tsk=self.task_id, fl=self.filename
                     )
                 )
                 # Execute MSSQLToGCSOperator to transfer data to GCS
                 MSSQLToGCSOperator(
+                    task_id="{}_mssql_to_gcs".format(self.task_id),
                     mssql_conn_id=self.mssql_conn_id,
                     gcp_conn_id=self.gcp_conn_id,
                     sql=self.sql,
@@ -240,8 +248,11 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     export_format="JSON",
                 ).execute(context)
 
+                self.log.info("The file {f} has been exported to GCS".format(full_filename))
+
                 # Execute GCSToBigQueryOperator to load data from GCS to BigQuery
                 GCSToBigQueryOperator(
+                    task_id="{}_gcs_to_bq".format(self.task_id),
                     bucket=self.bucket,
                     source_objects=["gs://" + self.filename + "_*"],
                     destination_project_dataset_table=self.destination_project_id
@@ -256,6 +267,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     allow_jagged_rows=self.allow_jagged_rows,
                     dag=self.dag,
                     google_cloud_storage_conn_id=self.gcp_conn_id,
+                    autodetect=autodetect,
                 ).execute(context)
             except Exception as ex:
                 self.log.error(
