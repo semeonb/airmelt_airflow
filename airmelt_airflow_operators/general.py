@@ -48,9 +48,10 @@ def get_var(
         does a simple string replace to substitute out the ``.`` in a given variable name
         (so don't include another ``.`` in the name!)
     """
+    if var_name == "ENV_TYPE":
+        return os.environ["ENV_TYPE"]
     if var_name in os.environ:
         default_value = os.environ.get(var_name, default=default)
-        return os.environ[var_name]
     else:
         default_value = default
     if default is None:
