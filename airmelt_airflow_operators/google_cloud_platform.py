@@ -217,9 +217,9 @@ class MSSQLToBigQueryOperator(BaseOperator):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
         gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
-            autodetect=False
+            autodetect = False
         else:
-            autodetect=True
+            autodetect = True
         if self.shard_data:
             filename_formatted = self.filename + "_{}"
         else:
@@ -250,7 +250,9 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     export_format="JSON",
                 ).execute(context)
 
-                self.log.info("The file {f} has been exported to GCS".format(full_filename))
+                self.log.info(
+                    "The file {} has been exported to GCS".format(full_filename)
+                )
 
                 # Execute GCSToBigQueryOperator to load data from GCS to BigQuery
                 GCSToBigQueryOperator(
@@ -291,7 +293,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                         "Could not delete GS files in {}".format("gs://" + gcs_folder)
                     )
             return True
-        
+
 
 class MySQLToBigQueryOperator(BaseOperator):
     """
@@ -347,7 +349,7 @@ class MySQLToBigQueryOperator(BaseOperator):
     delete_files_after_import: bool, optional
         whether to delete files after import, default: False
     ensure_utc: bool, optional
-        Ensure TIMESTAMP columns exported as UTC. If set to False, 
+        Ensure TIMESTAMP columns exported as UTC. If set to False,
         TIMESTAMP columns will be exported using the MySQL server’s default timezone.
     """
 
@@ -411,9 +413,9 @@ class MySQLToBigQueryOperator(BaseOperator):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
         gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
-            autodetect=False
+            autodetect = False
         else:
-            autodetect=True
+            autodetect = True
         if self.shard_data:
             filename_formatted = self.filename + "_{}"
         else:
@@ -445,7 +447,9 @@ class MySQLToBigQueryOperator(BaseOperator):
                     export_format="JSON",
                 ).execute(context)
 
-                self.log.info("The file {f} has been exported to GCS".format(full_filename))
+                self.log.info(
+                    "The file {} has been exported to GCS".format(full_filename)
+                )
 
                 # Execute GCSToBigQueryOperator to load data from GCS to BigQuery
                 GCSToBigQueryOperator(
@@ -528,7 +532,7 @@ class LoadQueryToTable(BaseOperator):
         cluster_fields=None,
         create_disposition="CREATE_IF_NEEDED",
         *args,
-        **kwargs
+        **kwargs,
     ):
         super(LoadQueryToTable, self).__init__(*args, **kwargs)
         self.bq_conn_id = bq_conn_id
