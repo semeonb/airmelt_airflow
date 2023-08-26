@@ -50,6 +50,7 @@ def get_var(
     """
     if var_name in os.environ:
         default_value = os.environ.get(var_name, default=default)
+        return os.environ[var_name]
     else:
         default_value = default
     if default is None:
