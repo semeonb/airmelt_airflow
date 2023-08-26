@@ -20,6 +20,10 @@ def extract_date(text):
         return None
 
 
+def gen_file_name(filename, date=datetime.utcnow()):
+    return "{}_{}".format(filename, date.strftime("%Y%m%d%H%M%S"))
+
+
 def get_var(
     var_name: str,
     default: Any = None,
