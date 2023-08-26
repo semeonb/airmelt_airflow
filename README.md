@@ -5,7 +5,7 @@ The repository's primary focus is to provide a cohesive set of tools to simplify
 
 # Installation #
 
-`pip install --ignore-installed git+ssh://git@github.com/semeonb/airflow_operators.git`
+`pip install --ignore-installed git+ssh://git@github.com/semeonb/airmelt_airflow.git`
 
 # Contents #
 
