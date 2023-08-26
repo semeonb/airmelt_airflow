@@ -6,7 +6,7 @@ setuptools.setup(
     version="0.0.1",
     author="Semeon Balagula @ Airmelt",
     description="Airflow Utilities",
-    packages=["operators"],
+    packages=["airmelt_airflow_operators"],
     install_requires=[
         "apache-airflow==2.7.0",
         "apache-airflow-providers-common-sql==1.7.0",
