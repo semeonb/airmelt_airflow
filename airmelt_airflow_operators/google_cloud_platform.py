@@ -358,6 +358,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         "sql",
         "filename",
         "destination_table_id",
+        "bucket",
         "destination_project_id",
         "list_processes_to_run",
     ]
