@@ -49,7 +49,7 @@ def get_var(
         (so don't include another ``.`` in the name!)
     """
     if var_name == "ENV_TYPE":
-        return os.environ["ENV_TYPE"]
+        return os.getenv("ENV_TYPE")
     if var_name in os.environ:
         default_value = os.environ.get(var_name, default=default)
     else:
