@@ -29,7 +29,6 @@ def get_var(
     default: Any = None,
     description: str = None,
     deserialize_json: bool = False,
-    alt_str_sep="__",
 ):
     """Use to retrieve variables that can be overridden at run time.
 
@@ -51,14 +50,11 @@ def get_var(
     """
     if var_name in os.environ:
         default_value = os.environ.get(var_name, default=default)
-    elif (alt_var_name := var_name.replace(".", alt_str_sep)) in os.environ:
-        default_value = os.environ.get(alt_var_name, default=default)
     else:
         default_value = default
     if default is None:
         return Variable.get(
             var_name,
-            default_var=default_value,
             deserialize_json=deserialize_json,
         )
     return Variable.setdefault(
