@@ -238,6 +238,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                         tsk=self.task_id, fl=self.filename
                     )
                 )
+                self.log.info("bucket: {b}; ".format(b=self.bucket))
                 # Execute MSSQLToGCSOperator to transfer data to GCS
                 MSSQLToGCSOperator(
                     task_id="{}_mssql_to_gcs".format(self.task_id),
@@ -434,6 +435,9 @@ class MySQLToBigQueryOperator(BaseOperator):
                     "Executing transfer task {tsk} to file {fl}".format(
                         tsk=self.task_id, fl=self.filename
                     )
+                )
+                self.log.info(
+                    "bucket: {b}; file: {f}".format(b=self.bucket, f=full_filename)
                 )
                 # Execute MySQLToGCSOperator to transfer data to GCS
                 MySQLToGCSOperator(
