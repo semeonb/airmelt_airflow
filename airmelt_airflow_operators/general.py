@@ -1,3 +1,4 @@
+import logging
 import re
 from typing import Any
 import os
@@ -19,22 +20,6 @@ def extract_date(text):
         return datetime.strptime(match.group(), "%Y-%m-%d")
     else:
         return None
-
-
-def gen_file_name(gs_path, date=datetime.utcnow(), sharded=False):
-    """
-    Generate a file name with a timestamp by default.
-    """
-    if sharded:
-        filename = "{gs_path}/{dt}/file".format(
-            gs_path=gs_path, dt=date.strftime("%Y%m%d%H%M%S")
-        )
-        return {"filename": filename + "{}", "gs_source": ["gs://" + filename + "*"]}
-    else:
-        filename = "{gs_path}/{dt}/file".format(
-            gs_path=gs_path, dt=date.strftime("%Y%m%d%H%M%S")
-        )
-        return {"filename": filename, "gs_source": ["gs://" + filename]}
 
 
 def get_var(
@@ -188,3 +173,4 @@ class GSFile(object):
             self.name = filename
             self.gs_source = ["gs://" + filename + "." + file_format]
         self.full_name = self.name + "." + file_format
+        self.path = "{gs_path}/{dt}".format(gs_path=gs_path, dt=dt)

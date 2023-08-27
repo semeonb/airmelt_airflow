@@ -32,8 +32,8 @@ class MSSQLToBigQueryOperator(BaseOperator):
         The SQL query to execute on the Microsoft SQL Server database.
     bucket : str
         The intermediate Google Cloud Storage bucket where the data should be written.
-    filename : str, required. Do not use extension
-        The name of the file in the bucket, including path. 'data/customers/export'
+    gs_path : str, required.
+        The path to store GS intermediate files 'data/customers'
     schema_filename : str, required
         expected data schema, schema_filename='schemas/export.json',
     destination_project_id : str, required
@@ -72,7 +72,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
 
     template_fields = [
         "sql",
-        "filename",
+        "gs_path",
         "destination_table_id",
         "bucket",
         "destination_project_id",
@@ -86,7 +86,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         list_processes_to_run,
         sql,
         bucket,
-        filename: str,
+        gs_path: str,
         destination_project_id,
         destination_table_id,
         schema_filename=None,
@@ -108,7 +108,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.gcp_conn_id = gcp_conn_id
         self.sql = sql
         self.bucket = bucket
-        self.filename = filename
+        self.gs_path = gs_path
         self.schema_filename = schema_filename
         self.destination_project_id = destination_project_id
         self.destination_table_id = destination_table_id
@@ -127,7 +127,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
 
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
-        gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
             autodetect = False
             schema_object = general._get_schema(self.schema_filename)
@@ -143,7 +142,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
             try:
                 self.log.info(
                     "Executing transfer task {tsk} to file {fl}".format(
-                        tsk=self.task_id, fl=self.filename
+                        tsk=self.task_id, fl=gs_file.full_name
                     )
                 )
                 self.log.info("bucket: {b}; ".format(b=self.bucket))
@@ -194,13 +193,13 @@ class MSSQLToBigQueryOperator(BaseOperator):
                 try:
                     GCSDeleteObjectsOperator(
                         bucket_name=self.bucket,
-                        prefix="gs://" + gcs_folder,
+                        prefix="gs://" + gs_file.path,
                         dag=self.dag,
                         google_cloud_storage_conn_id=self.gcp_conn_id,
                     ).execute(context)
                 except Exception as ex:
                     self.logger.error(
-                        "Could not delete GS files in {}".format("gs://" + gcs_folder)
+                        "Could not delete GS files in {}".format("gs://" + gs_file.path)
                     )
             return True
 
@@ -322,7 +321,6 @@ class MySQLToBigQueryOperator(BaseOperator):
 
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
-        gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
             autodetect = False
             schema_object = general._get_schema(self.schema_filename)
@@ -392,13 +390,13 @@ class MySQLToBigQueryOperator(BaseOperator):
                 try:
                     GCSDeleteObjectsOperator(
                         bucket_name=self.bucket,
-                        prefix="gs://" + gcs_folder,
+                        prefix="gs://" + gs_file.path,
                         dag=self.dag,
                         google_cloud_storage_conn_id=self.gcp_conn_id,
                     ).execute(context)
                 except Exception as ex:
                     self.logger.error(
-                        "Could not delete GS files in {}".format("gs://" + gcs_folder)
+                        "Could not delete GS files in {}".format("gs://" + gs_file.path)
                     )
             return True
 
