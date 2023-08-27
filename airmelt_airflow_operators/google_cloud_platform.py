@@ -431,11 +431,11 @@ class MySQLToBigQueryOperator(BaseOperator):
             full_filename = filename_formatted + ".csv"
         if serialize_process_list == [] or self.task_id in serialize_process_list:
             try:
-                self.log.info(
-                    "Executing transfer task {tsk} to file {fl}".format(
-                        tsk=self.task_id, fl=self.filename
-                    )
-                )
+                # self.log.info(
+                #     "Executing transfer task {tsk} to file {fl}".format(
+                #         tsk=self.task_id, fl=self.filename
+                #     )
+                # )
                 self.log.info(
                     "bucket: {b}; file: {f}".format(b=self.bucket, f=full_filename)
                 )
