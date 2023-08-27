@@ -104,6 +104,13 @@ def generate_schema_from_file(self, schema_file):
     return schema
 
 
+def build_gs_source_objects(sharded=False, filename=None):
+    if sharded:
+        return ["gs://" + filename + "*"]
+    else:
+        return ["gs://" + filename]
+
+
 class MSSQLToBigQueryOperator(BaseOperator):
     """
     Handles query transfers from a Microsoft SQL Server database to a Google Cloud Storage bucket,
@@ -224,7 +231,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
             autodetect = True
             schema_object = None
         if self.shard_data:
-            filename_formatted = self.filename + "_{}"
+            filename_formatted = self.filename + "{}"
         else:
             filename_formatted = self.filename
         if self.file_format == "json":
@@ -262,7 +269,9 @@ class MSSQLToBigQueryOperator(BaseOperator):
                 GCSToBigQueryOperator(
                     task_id="{}_gcs_to_bq".format(self.task_id),
                     bucket=self.bucket,
-                    source_objects=["gs://" + self.filename + "_*"],
+                    source_objects=build_gs_source_objects(
+                        sharded=self.shard_data, filename=self.filename
+                    ),
                     destination_project_dataset_table=self.destination_project_id
                     + "."
                     + self.destination_table_id,
@@ -424,7 +433,7 @@ class MySQLToBigQueryOperator(BaseOperator):
             autodetect = True
             schema_object = None
         if self.shard_data:
-            filename_formatted = self.filename + "_{}"
+            filename_formatted = self.filename + "{}"
         else:
             filename_formatted = self.filename
         if self.file_format == "json":
@@ -465,7 +474,9 @@ class MySQLToBigQueryOperator(BaseOperator):
                 GCSToBigQueryOperator(
                     task_id="{}_gcs_to_bq".format(self.task_id),
                     bucket=self.bucket,
-                    source_objects=["gs://" + self.filename + "_*"],
+                    source_objects=build_gs_source_objects(
+                        sharded=self.shard_data, filename=self.filename
+                    ),
                     destination_project_dataset_table=self.destination_project_id
                     + "."
                     + self.destination_table_id,

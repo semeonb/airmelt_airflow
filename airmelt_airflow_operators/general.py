@@ -20,8 +20,23 @@ def extract_date(text):
         return None
 
 
-def gen_file_name(filename, date=datetime.utcnow()):
-    return "{}_{}".format(filename, date.strftime("%Y%m%d%H%M%S"))
+def gen_file_name(filename, date=datetime.utcnow(), gen_ts_path=True):
+    """
+    Generate a file name with a timestamp by default.
+    If ``gen_ts_path`` is set to False, one needs to be very careful about using this with sharded loads.
+    """
+    if gen_ts_path:
+        return "{f1}/{dt}/{f2}".format(
+            f1=filename,
+            dt=date.strftime("%Y%m%d%H%M%S"),
+            f2=filename,
+        )
+    else:
+        return "{f1}/{f2}_{dt}".format(
+            f1=filename,
+            dt=date.strftime("%Y%m%d%H%M%S"),
+            f2=filename,
+        )
 
 
 def get_var(
