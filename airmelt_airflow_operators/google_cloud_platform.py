@@ -219,8 +219,10 @@ class MSSQLToBigQueryOperator(BaseOperator):
         gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
             autodetect = False
+            schema_object = _get_schema(self.schema_filename)
         else:
             autodetect = True
+            schema_object = None
         if self.shard_data:
             filename_formatted = self.filename + "_{}"
         else:
@@ -264,7 +266,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     destination_project_dataset_table=self.destination_project_id
                     + "."
                     + self.destination_table_id,
-                    schema_object=_get_schema(self.schema_filename),
+                    schema_object=schema_object,
                     write_disposition=self.write_disposition,
                     source_format=source_format,
                     create_disposition=self.create_disposition,
@@ -417,8 +419,10 @@ class MySQLToBigQueryOperator(BaseOperator):
         gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
             autodetect = False
+            schema_object = _get_schema(self.schema_filename)
         else:
             autodetect = True
+            schema_object = None
         if self.shard_data:
             filename_formatted = self.filename + "_{}"
         else:
@@ -465,7 +469,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                     destination_project_dataset_table=self.destination_project_id
                     + "."
                     + self.destination_table_id,
-                    schema_object=_get_schema(self.schema_filename),
+                    schema_object=schema_object,
                     write_disposition=self.write_disposition,
                     source_format=source_format,
                     create_disposition=self.create_disposition,
