@@ -11,104 +11,10 @@ from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
     GCSToBigQueryOperator,
 )
 from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
-from google.cloud import bigquery
+import general
 
 NEWLINE_DELIMITED_JSON = "NEWLINE_DELIMITED_JSON"
 CSV = "CSV"
-
-
-def _get_schema(schema_file):
-    """
-    The _get_schema function takes the path to a JSON schema file as input and returns a json object that contains all columns needed for the BigQuery table.
-
-    schema_file: the path of the JSON file containing the schema.
-    """
-    logger = logging.getLogger(__name__)
-    try:
-        with open(schema_file) as schema_data:
-            obj = json.load(schema_data)
-            for i in obj:
-                if "description" not in i:
-                    i["description"] = ""
-            return obj
-    except FileNotFoundError as e:
-        logger.error(f"Error: {schema_file} not found")
-        raise e
-    except Exception as e:
-        logger.error(f"Error reading {schema_file}")
-        raise e
-    finally:
-        schema_data.close()
-
-
-def generate_schema_from_file(self, schema_file):
-    # Get the JSON object from the schema file
-    json_object = _get_schema(schema_file)
-
-    # Initialize an empty list to hold the generated schema fields
-    schema = []
-
-    # Loop through each object in the JSON schema
-    for i in json_object:
-        # Ensure 'description' attribute exists, set to empty string if missing
-        if "description" not in i:
-            i["description"] = ""
-
-        # Ensure 'mode' attribute exists, set to 'NULLABLE' if missing
-        if "mode" not in i:
-            i["mode"] = "NULLABLE"
-
-        # Check if the field type is not 'RECORD'
-        if not i.get("type") == "RECORD":
-            # Append a SchemaField for non-nested fields
-            schema.append(
-                bigquery.SchemaField(
-                    i.get("name"),
-                    i.get("type"),
-                    i.get("mode"),
-                    i.get("description"),
-                )
-            )
-        else:
-            # Initialize an empty list for nested fields
-            nested_schema = []
-
-            # Loop through nested fields
-            for k in i["fields"]:
-                # Ensure 'description' attribute exists, set to empty string if missing
-                if "description" not in k:
-                    k["description"] = ""
-
-                # Append a SchemaField for nested fields
-                nested_schema.append(
-                    bigquery.SchemaField(
-                        k.get("name"),
-                        k.get("type"),
-                        k.get("mode"),
-                        k.get("description"),
-                    )
-                )
-
-            # Append a SchemaField for the entire nested structure
-            schema.append(
-                bigquery.SchemaField(
-                    i.get("name"),
-                    i.get("type"),
-                    i.get("mode"),
-                    i.get("description"),
-                    (nested_schema),
-                )
-            )
-
-    # Return the generated schema
-    return schema
-
-
-def build_gs_source_objects(sharded=False, filename=None):
-    if sharded:
-        return ["gs://" + filename + "*"]
-    else:
-        return ["gs://" + filename]
 
 
 class MSSQLToBigQueryOperator(BaseOperator):
@@ -325,8 +231,8 @@ class MySQLToBigQueryOperator(BaseOperator):
         The SQL query to execute on the MySQL database.
     bucket : str
         The intermediate Google Cloud Storage bucket where the data should be written.
-    filename : str, required. Do not use extension
-        The name of the file in the bucket, including path. 'data/customers/export'
+    gs_path : str, required.
+        The path to store GS intermediate files 'data/customers'
     schema_filename : str, required
         expected data schema, schema_filename='schemas/export.json',
     destination_project_id : str, required
@@ -368,7 +274,7 @@ class MySQLToBigQueryOperator(BaseOperator):
 
     template_fields = [
         "sql",
-        "filename",
+        "gs_path",
         "destination_table_id",
         "bucket",
         "destination_project_id",
@@ -382,7 +288,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         list_processes_to_run,
         sql,
         bucket,
-        filename: str,
+        gs_path: str,
         destination_project_id,
         destination_table_id,
         schema_filename=None,
@@ -405,7 +311,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         self.gcp_conn_id = gcp_conn_id
         self.sql = sql
         self.bucket = bucket
-        self.filename = filename
+        self.gs_path = gs_path
         self.schema_filename = schema_filename
         self.destination_project_id = destination_project_id
         self.destination_table_id = destination_table_id

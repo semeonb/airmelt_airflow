@@ -2,6 +2,7 @@ import re
 from typing import Any
 import os
 from datetime import datetime
+from google.cloud import bigquery
 from airflow.models import BaseOperator, Variable
 from airflow.utils.decorators import apply_defaults
 
@@ -20,23 +21,20 @@ def extract_date(text):
         return None
 
 
-def gen_file_name(filename, date=datetime.utcnow(), gen_ts_path=True):
+def gen_file_name(gs_path, date=datetime.utcnow(), sharded=False):
     """
     Generate a file name with a timestamp by default.
-    If ``gen_ts_path`` is set to False, one needs to be very careful about using this with sharded loads.
     """
-    if gen_ts_path:
-        return "{f1}/{dt}/{f2}".format(
-            f1=filename,
-            dt=date.strftime("%Y%m%d%H%M%S"),
-            f2=filename,
+    if sharded:
+        filename = "{gs_path}/{dt}/file".format(
+            gs_path=gs_path, dt=date.strftime("%Y%m%d%H%M%S")
         )
+        return {"filename": filename + "{}", "gs_source": ["gs://" + filename + "*"]}
     else:
-        return "{f1}/{f2}_{dt}".format(
-            f1=filename,
-            dt=date.strftime("%Y%m%d%H%M%S"),
-            f2=filename,
+        filename = "{gs_path}/{dt}/file".format(
+            gs_path=gs_path, dt=date.strftime("%Y%m%d%H%M%S")
         )
+        return {"filename": filename, "gs_source": ["gs://" + filename]}
 
 
 def get_var(
@@ -80,6 +78,93 @@ def get_var(
         description=description,
         deserialize_json=deserialize_json,
     )
+
+
+def _get_schema(schema_file):
+    """
+    The _get_schema function takes the path to a JSON schema file as input and returns a json object that contains all columns needed for the BigQuery table.
+
+    schema_file: the path of the JSON file containing the schema.
+    """
+    logger = logging.getLogger(__name__)
+    try:
+        with open(schema_file) as schema_data:
+            obj = json.load(schema_data)
+            for i in obj:
+                if "description" not in i:
+                    i["description"] = ""
+            return obj
+    except FileNotFoundError as e:
+        logger.error(f"Error: {schema_file} not found")
+        raise e
+    except Exception as e:
+        logger.error(f"Error reading {schema_file}")
+        raise e
+    finally:
+        schema_data.close()
+
+
+def generate_schema_from_file(self, schema_file):
+    # Get the JSON object from the schema file
+    json_object = _get_schema(schema_file)
+
+    # Initialize an empty list to hold the generated schema fields
+    schema = []
+
+    # Loop through each object in the JSON schema
+    for i in json_object:
+        # Ensure 'description' attribute exists, set to empty string if missing
+        if "description" not in i:
+            i["description"] = ""
+
+        # Ensure 'mode' attribute exists, set to 'NULLABLE' if missing
+        if "mode" not in i:
+            i["mode"] = "NULLABLE"
+
+        # Check if the field type is not 'RECORD'
+        if not i.get("type") == "RECORD":
+            # Append a SchemaField for non-nested fields
+            schema.append(
+                bigquery.SchemaField(
+                    i.get("name"),
+                    i.get("type"),
+                    i.get("mode"),
+                    i.get("description"),
+                )
+            )
+        else:
+            # Initialize an empty list for nested fields
+            nested_schema = []
+
+            # Loop through nested fields
+            for k in i["fields"]:
+                # Ensure 'description' attribute exists, set to empty string if missing
+                if "description" not in k:
+                    k["description"] = ""
+
+                # Append a SchemaField for nested fields
+                nested_schema.append(
+                    bigquery.SchemaField(
+                        k.get("name"),
+                        k.get("type"),
+                        k.get("mode"),
+                        k.get("description"),
+                    )
+                )
+
+            # Append a SchemaField for the entire nested structure
+            schema.append(
+                bigquery.SchemaField(
+                    i.get("name"),
+                    i.get("type"),
+                    i.get("mode"),
+                    i.get("description"),
+                    (nested_schema),
+                )
+            )
+
+    # Return the generated schema
+    return schema
 
 
 class SuccessOperator(BaseOperator):
