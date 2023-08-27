@@ -167,10 +167,10 @@ class GSFile(object):
         if sharded:
             filename = "{gs_path}/{dt}/file".format(gs_path=gs_path, dt=dt)
             self.name = filename + "{}"
-            self.gs_source = ["gs://" + filename + "*"]
+            self.gs_source = [filename + "*"]
         else:
             filename = "{gs_path}/{dt}/file".format(gs_path=gs_path, dt=dt)
             self.name = filename
-            self.gs_source = ["gs://" + filename + "." + file_format]
+            self.gs_source = [filename + "." + file_format]
         self.full_name = self.name + "." + file_format
         self.path = "{gs_path}/{dt}".format(gs_path=gs_path, dt=dt)

@@ -381,7 +381,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                 ).execute(context)
             except Exception as ex:
                 self.log.error(
-                    "Could not load data from MSSQL {tsk}: {ex}".format(
+                    "Could not load data from MySQL {tsk}: {ex}".format(
                         tsk=self.task_id, ex=ex
                     )
                 )
