@@ -1,6 +1,4 @@
 # The purpose of this package is to create custom operators for Google Cloud Platform
-
-import logging
 import os
 import json
 from airflow.models import BaseOperator
