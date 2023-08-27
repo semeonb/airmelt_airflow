@@ -274,7 +274,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     allow_quoted_newlines=self.allow_quoted_newlines,
                     allow_jagged_rows=self.allow_jagged_rows,
                     dag=self.dag,
-                    google_cloud_storage_conn_id=self.gcp_conn_id,
+                    gcp_conn_id=self.gcp_conn_id,
                     autodetect=autodetect,
                 ).execute(context)
             except Exception as ex:
@@ -477,7 +477,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                     allow_quoted_newlines=self.allow_quoted_newlines,
                     allow_jagged_rows=self.allow_jagged_rows,
                     dag=self.dag,
-                    google_cloud_storage_conn_id=self.gcp_conn_id,
+                    gcp_conn_id=self.gcp_conn_id,
                     autodetect=autodetect,
                 ).execute(context)
             except Exception as ex:
