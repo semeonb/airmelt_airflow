@@ -132,7 +132,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
             autodetect = False
-            schema_object = _get_schema(self.schema_filename)
+            schema_object = general._get_schema(self.schema_filename)
         else:
             autodetect = True
             schema_object = None
@@ -334,10 +334,11 @@ class MySQLToBigQueryOperator(BaseOperator):
         gcs_folder, _ = os.path.split(self.filename)
         if self.schema_filename:
             autodetect = False
-            schema_object = _get_schema(self.schema_filename)
+            schema_object = general._get_schema(self.schema_filename)
         else:
             autodetect = True
             schema_object = None
+        file_obj = general.gen_file_name(gs_path=self.gs_path, sharded=self.shard_data)
         if self.shard_data:
             filename_formatted = self.filename + "{}"
         else:
