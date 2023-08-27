@@ -338,26 +338,20 @@ class MySQLToBigQueryOperator(BaseOperator):
         else:
             autodetect = True
             schema_object = None
-        file_obj = general.gen_file_name(gs_path=self.gs_path, sharded=self.shard_data)
-        if self.shard_data:
-            filename_formatted = self.filename + "{}"
-        else:
-            filename_formatted = self.filename
+        gs_file = general.GSFile(gs_path=self.gs_path, sharded=self.shard_data)
         if self.file_format == "json":
             source_format = NEWLINE_DELIMITED_JSON
-            full_filename = filename_formatted + ".json"
         else:
             source_format = CSV
-            full_filename = filename_formatted + ".csv"
         if serialize_process_list == [] or self.task_id in serialize_process_list:
             try:
                 self.log.info(
                     "Executing transfer task {tsk} to file {fl}".format(
-                        tsk=self.task_id, fl=self.filename
+                        tsk=self.task_id, fl=gs_file.name
                     )
                 )
                 self.log.info(
-                    "bucket: {b}; file: {f}".format(b=self.bucket, f=full_filename)
+                    "bucket: {b}; file: {f}".format(b=self.bucket, f=gs_file.full_name)
                 )
                 # Execute MySQLToGCSOperator to transfer data to GCS
                 MySQLToGCSOperator(
@@ -366,7 +360,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                     gcp_conn_id=self.gcp_conn_id,
                     sql=self.sql,
                     bucket=self.bucket,
-                    filename=full_filename,
+                    filename=gs_file.full_name,
                     schema_filename=self.schema_filename,
                     dag=self.dag,
                     ensure_utc=self.ensure_utc,
@@ -374,16 +368,14 @@ class MySQLToBigQueryOperator(BaseOperator):
                 ).execute(context)
 
                 self.log.info(
-                    "The file {} has been exported to GCS".format(full_filename)
+                    "The file {} has been exported to GCS".format(gs_file.full_name)
                 )
 
                 # Execute GCSToBigQueryOperator to load data from GCS to BigQuery
                 GCSToBigQueryOperator(
                     task_id="{}_gcs_to_bq".format(self.task_id),
                     bucket=self.bucket,
-                    source_objects=build_gs_source_objects(
-                        sharded=self.shard_data, filename=self.filename
-                    ),
+                    source_objects=gs_file.gs_source,
                     destination_project_dataset_table=self.destination_project_id
                     + "."
                     + self.destination_table_id,

@@ -177,7 +177,7 @@ class SuccessOperator(BaseOperator):
 
 
 class GSFile(object):
-    def __init__(self, gs_path: str, sharded: bool = False) -> None:
+    def __init__(self, gs_path: str, sharded: bool = False, file_format="json") -> None:
         dt = datetime.utcnow().strftime("%Y%m%d%H%M%S")
         if sharded:
             filename = "{gs_path}/{dt}/file".format(gs_path=gs_path, dt=dt)
@@ -186,4 +186,5 @@ class GSFile(object):
         else:
             filename = "{gs_path}/{dt}/file".format(gs_path=gs_path, dt=dt)
             self.name = filename
-            self.gs_source = ["gs://" + filename]
+            self.gs_source = ["gs://" + filename + "." + file_format]
+        self.full_name = self.name + "." + file_format
