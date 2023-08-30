@@ -90,15 +90,8 @@ def _get_schema(schema_file) -> dict:
         schema_data.close()
 
 
-def generate_bq_schema(self, schema_dict: dict = None, schema_file=None):
-    # Get the JSON object from the schema file or dictionary
-    if schema_file:
-        schema_dict = _get_schema(schema_file)
-    elif schema_dict:
-        pass
-    else:
-        raise ValueError("Must provide either schema_file or schema_dict")
-
+def generate_bq_schema(self, schema_dict: dict):
+    # Generate a BigQuery schema from dictionary
     # Initialize an empty list to hold the generated schema fields
     schema = []
 

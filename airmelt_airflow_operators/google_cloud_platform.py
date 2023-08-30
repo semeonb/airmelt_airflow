@@ -1,5 +1,4 @@
 # The purpose of this package is to create custom operators for Google Cloud Platform
-import os
 import json
 from airflow.models import BaseOperator
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
@@ -34,8 +33,8 @@ class MSSQLToBigQueryOperator(BaseOperator):
         The intermediate Google Cloud Storage bucket where the data should be written.
     gs_path : str, required.
         The path to store GS intermediate files 'data/customers'
-    schema_filename : str, required
-        expected data schema, schema_filename='schemas/export.json',
+    table_schema : dict, optional
+        expected BQ table schema dictionary
     destination_project_id : str, required
         The destination Google BigQuery project id.
     destination_table_id : str, required
@@ -77,7 +76,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         "bucket",
         "destination_project_id",
         "list_processes_to_run",
-        "schema_filename",
     ]
 
     def __init__(
@@ -90,7 +88,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         gs_path: str,
         destination_project_id,
         destination_table_id,
-        schema_filename=None,
+        table_schema=None,
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
         file_format="json",
@@ -110,7 +108,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.sql = sql
         self.bucket = bucket
         self.gs_path = gs_path
-        self.schema_filename = schema_filename
+        self.table_schema = table_schema
         self.destination_project_id = destination_project_id
         self.destination_table_id = destination_table_id
         self.write_disposition = write_disposition
@@ -128,12 +126,12 @@ class MSSQLToBigQueryOperator(BaseOperator):
 
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
-        if self.schema_filename:
+        if self.table_schema:
             autodetect = False
-            schema_object = general._get_schema(self.schema_filename)
+            schema_fields = general.generate_bq_schema(self.table_schema)
         else:
             autodetect = True
-            schema_object = None
+            schema_fields = None
         gs_file = general.GSFile(gs_path=self.gs_path, sharded=self.shard_data)
         if self.file_format == "json":
             source_format = NEWLINE_DELIMITED_JSON
@@ -155,7 +153,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     sql=self.sql,
                     bucket=self.bucket,
                     filename=gs_file.full_name,
-                    schema_filename=self.schema_filename,
+                    schema=schema_fields,
                     dag=self.dag,
                     export_format="JSON",
                 ).execute(context)
@@ -172,7 +170,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     destination_project_dataset_table=self.destination_project_id
                     + "."
                     + self.destination_table_id,
-                    schema_object=schema_object,
+                    schema_fields=schema_fields,
                     write_disposition=self.write_disposition,
                     source_format=source_format,
                     create_disposition=self.create_disposition,
@@ -224,8 +222,8 @@ class MySQLToBigQueryOperator(BaseOperator):
         The intermediate Google Cloud Storage bucket where the data should be written.
     gs_path : str, required.
         The path to store GS intermediate files 'data/customers'
-    schema_filename : str, required
-        expected data schema, schema_filename='schemas/export.json',
+    table_schema : dict, optional
+        expected table data schema dictionary
     destination_project_id : str, required
         The destination Google BigQuery project id.
     destination_table_id : str, required
@@ -270,7 +268,6 @@ class MySQLToBigQueryOperator(BaseOperator):
         "bucket",
         "destination_project_id",
         "list_processes_to_run",
-        "schema_filename",
     ]
 
     def __init__(
@@ -283,7 +280,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         gs_path: str,
         destination_project_id,
         destination_table_id,
-        schema_filename=None,
+        table_schema=None,
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
         file_format="json",
@@ -304,7 +301,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         self.sql = sql
         self.bucket = bucket
         self.gs_path = gs_path
-        self.schema_filename = schema_filename
+        self.table_schema = table_schema
         self.destination_project_id = destination_project_id
         self.destination_table_id = destination_table_id
         self.write_disposition = write_disposition
@@ -323,13 +320,12 @@ class MySQLToBigQueryOperator(BaseOperator):
 
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
-        if self.schema_filename:
-            self.log.info("schema_filename: {}".format(self.schema_filename))
+        if self.table_schema:
             autodetect = False
-            schema_object = general._get_schema(self.schema_filename)
+            schema_fields = general.generate_bq_schema(self.table_schema)
         else:
             autodetect = True
-            schema_object = None
+            schema_fields = None
         gs_file = general.GSFile(gs_path=self.gs_path, sharded=self.shard_data)
         if self.file_format == "json":
             source_format = NEWLINE_DELIMITED_JSON
@@ -353,7 +349,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                     sql=self.sql,
                     bucket=self.bucket,
                     filename=gs_file.full_name,
-                    schema_filename=self.schema_filename,
+                    schema=schema_fields,
                     dag=self.dag,
                     ensure_utc=self.ensure_utc,
                     export_format="JSON",
@@ -371,7 +367,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                     destination_project_dataset_table=self.destination_project_id
                     + "."
                     + self.destination_table_id,
-                    schema_object=schema_object,
+                    schema_fields=schema_fields,
                     write_disposition=self.write_disposition,
                     source_format=source_format,
                     create_disposition=self.create_disposition,
