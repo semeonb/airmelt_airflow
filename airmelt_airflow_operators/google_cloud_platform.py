@@ -280,7 +280,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         gs_path: str,
         destination_project_id,
         destination_table_id,
-        table_schema=None,
+        table_schema: dict = None,
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
         file_format="json",
