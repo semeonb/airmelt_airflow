@@ -77,6 +77,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         "bucket",
         "destination_project_id",
         "list_processes_to_run",
+        "schema_filename",
     ]
 
     def __init__(
@@ -269,6 +270,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         "bucket",
         "destination_project_id",
         "list_processes_to_run",
+        "schema_filename",
     ]
 
     def __init__(
