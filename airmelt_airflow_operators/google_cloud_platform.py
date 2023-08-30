@@ -324,6 +324,7 @@ class MySQLToBigQueryOperator(BaseOperator):
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
         if self.schema_filename:
+            self.log.info("schema_filename: {}".format(self.schema_filename))
             autodetect = False
             schema_object = general._get_schema(self.schema_filename)
         else:
