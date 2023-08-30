@@ -3,6 +3,7 @@ import re
 from typing import Any
 import os
 from datetime import datetime
+import json
 from google.cloud import bigquery
 from airflow.models import BaseOperator, Variable
 from airflow.utils.decorators import apply_defaults
