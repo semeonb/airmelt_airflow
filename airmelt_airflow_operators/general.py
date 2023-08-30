@@ -66,7 +66,7 @@ def get_var(
     )
 
 
-def _get_schema(schema_file):
+def _get_schema(schema_file) -> dict:
     """
     The _get_schema function takes the path to a JSON schema file as input and returns a json object that contains all columns needed for the BigQuery table.
 
@@ -90,15 +90,20 @@ def _get_schema(schema_file):
         schema_data.close()
 
 
-def generate_schema_from_file(self, schema_file):
-    # Get the JSON object from the schema file
-    json_object = _get_schema(schema_file)
+def generate_bq_schema(self, schema_dict: dict = None, schema_file=None):
+    # Get the JSON object from the schema file or dictionary
+    if schema_file:
+        schema_dict = _get_schema(schema_file)
+    elif schema_dict:
+        pass
+    else:
+        raise ValueError("Must provide either schema_file or schema_dict")
 
     # Initialize an empty list to hold the generated schema fields
     schema = []
 
     # Loop through each object in the JSON schema
-    for i in json_object:
+    for i in schema_dict:
         # Ensure 'description' attribute exists, set to empty string if missing
         if "description" not in i:
             i["description"] = ""
