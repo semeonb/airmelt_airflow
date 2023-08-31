@@ -67,6 +67,8 @@ class MSSQLToBigQueryOperator(BaseOperator):
         shard query into multiple files. This will result in a prefix being added. Default is False
     delete_files_after_import: bool, optional
         whether to delete files after import, default: False
+    partition : str, optional
+        The partition to load the data into, in YYY-MM-DD format
     """
 
     template_fields = [
@@ -76,6 +78,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         "bucket",
         "destination_project_id",
         "list_processes_to_run",
+        "partition",
     ]
 
     def __init__(
@@ -99,6 +102,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         allow_jagged_rows=True,
         shard_data=True,
         delete_files_after_import=False,
+        partition=None,
         *args,
         **kwargs,
     ):
@@ -122,6 +126,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.allow_jagged_rows = allow_jagged_rows
         self.shard_data = shard_data
         self.delete_files_after_import = delete_files_after_import
+        self.partition = partition
         self.task_id = kwargs.get("task_id")
 
     def execute(self, context):
@@ -167,9 +172,11 @@ class MSSQLToBigQueryOperator(BaseOperator):
                     task_id="{}_gcs_to_bq".format(self.task_id),
                     bucket=self.bucket,
                     source_objects=gs_file.gs_source,
-                    destination_project_dataset_table=self.destination_project_id
-                    + "."
-                    + self.destination_table_id,
+                    destination_project_dataset_table=general.gen_bq_dataset_table(
+                        project_id=self.destination_project_id,
+                        destination_table_id=self.destination_table_id,
+                        partition=self.partition,
+                    ),
                     schema_fields=schema_fields,
                     write_disposition=self.write_disposition,
                     source_format=source_format,
@@ -259,6 +266,8 @@ class MySQLToBigQueryOperator(BaseOperator):
     ensure_utc: bool, optional
         Ensure TIMESTAMP columns exported as UTC. If set to False,
         TIMESTAMP columns will be exported using the MySQL server’s default timezone.
+    partition : str, optional
+        The partition to load the data into, in YYY-MM-DD format
     """
 
     template_fields = [
@@ -268,6 +277,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         "bucket",
         "destination_project_id",
         "list_processes_to_run",
+        "partition",
     ]
 
     def __init__(
@@ -292,6 +302,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         shard_data=True,
         delete_files_after_import=False,
         ensure_utc=True,
+        partition=None,
         *args,
         **kwargs,
     ):
@@ -316,6 +327,7 @@ class MySQLToBigQueryOperator(BaseOperator):
         self.shard_data = shard_data
         self.delete_files_after_import = delete_files_after_import
         self.ensure_utc = ensure_utc
+        self.partition = partition
         self.task_id = kwargs.get("task_id")
 
     def execute(self, context):
@@ -364,9 +376,11 @@ class MySQLToBigQueryOperator(BaseOperator):
                     task_id="{}_gcs_to_bq".format(self.task_id),
                     bucket=self.bucket,
                     source_objects=gs_file.gs_source,
-                    destination_project_dataset_table=self.destination_project_id
-                    + "."
-                    + self.destination_table_id,
+                    destination_project_dataset_table=general.gen_bq_dataset_table(
+                        project_id=self.destination_project_id,
+                        destination_table_id=self.destination_table_id,
+                        partition=self.partition,
+                    ),
                     schema_fields=schema_fields,
                     write_disposition=self.write_disposition,
                     source_format=source_format,
@@ -402,7 +416,7 @@ class MySQLToBigQueryOperator(BaseOperator):
 
 class LoadQueryToTable(BaseOperator):
     """Handles executing the queries into partition
-    ``output_project_id``, ``output_table``, ``query``
+    ``destination_project_id``, ``destination_table_id``, ``query``
     are templated variable for this operator.
 
 
@@ -410,11 +424,11 @@ class LoadQueryToTable(BaseOperator):
     ----------
     bq_conn_id: str, required
         The connection id for big query
-    output_project_id: str, required
+    destination_project_id: str, required
         The output project id
     query: str, required
         The sql query that appends to the output table
-    output_table: str, required
+    destination_table_id: str, required
         The name of the output table for each entity
     write_disposition: str, required
         Write disposition argument for query result destination table
@@ -424,33 +438,41 @@ class LoadQueryToTable(BaseOperator):
         List of fields to be clustered
     create_disposition: str, optional
         Create disposition argument for query result destination table
-
+    partition: str, optional
+        The partition to load the data into, in YYY-MM-DD format
     """
 
-    template_fields = ["output_project_id", "output_table", "query"]
+    template_fields = [
+        "destination_project_id",
+        "destination_table_id",
+        "query",
+        "partition",
+    ]
 
     def __init__(
         self,
         bq_conn_id,
         query,
-        output_project_id,
-        output_table,
+        destination_project_id,
+        destination_table_id,
         write_disposition,
         time_partitioning=None,
         cluster_fields=None,
         create_disposition="CREATE_IF_NEEDED",
+        partition=None,
         *args,
         **kwargs,
     ):
         super(LoadQueryToTable, self).__init__(*args, **kwargs)
         self.bq_conn_id = bq_conn_id
-        self.output_project_id = output_project_id
+        self.destination_project_id = destination_project_id
         self.query = query
-        self.output_table = output_table
+        self.destination_table_id = destination_table_id
         self.write_disposition = write_disposition
         self.create_disposition = create_disposition
         self.time_partitioning = time_partitioning
         self.cluster_fields = cluster_fields
+        self.partition = partition
 
     def execute(self, context):
         bq_hook = BigQueryHook(bigquery_conn_id=self.bq_conn_id, use_legacy_sql=False)
@@ -461,9 +483,11 @@ class LoadQueryToTable(BaseOperator):
 
             cursor.run_query(
                 sql=self.query,
-                destination_dataset_table=self.output_project_id
-                + "."
-                + self.output_table,
+                destination_dataset_table=general.gen_bq_dataset_table(
+                    project_id=self.destination_project_id,
+                    destination_table_id=self.destination_table_id,
+                    partition=self.partition,
+                ),
                 create_disposition=self.create_disposition,
                 write_disposition=self.write_disposition,
                 allow_large_results=True,

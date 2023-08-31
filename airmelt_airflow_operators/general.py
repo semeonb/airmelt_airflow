@@ -151,6 +151,16 @@ def generate_bq_schema(schema_dict: dict):
     return schema
 
 
+def gen_bq_dataset_table(project_id, destination_table_id, partition: datetime = None):
+    """
+    The gen_bq_dataset_table function takes the project_id, destination_table_id and partition as input
+    and returns the full table name in the format project_id.dataset_id.table_id$partition.
+    """
+    if partition:
+        destination_table_id = destination_table_id + "$" + partition.strftime("%Y%m%d")
+    return f"{project_id}.{destination_table_id}"
+
+
 class SuccessOperator(BaseOperator):
     @apply_defaults
     def __init__(self, *args, **kwargs):
