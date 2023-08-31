@@ -90,7 +90,7 @@ def _get_schema(schema_file) -> dict:
         schema_data.close()
 
 
-def generate_bq_schema(self, schema_dict: dict):
+def generate_bq_schema(schema_dict: dict):
     # Generate a BigQuery schema from dictionary
     # Initialize an empty list to hold the generated schema fields
     schema = []
