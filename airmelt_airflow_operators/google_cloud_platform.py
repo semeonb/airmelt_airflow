@@ -322,7 +322,8 @@ class MySQLToBigQueryOperator(BaseOperator):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
         if self.table_schema:
             autodetect = False
-            schema_fields = general.generate_bq_schema(self.table_schema)
+            schema_fields = self.table_schema
+            # general.generate_bq_schema(self.table_schema)
         else:
             autodetect = True
             schema_fields = None
