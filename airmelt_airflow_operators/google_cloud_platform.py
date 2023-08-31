@@ -332,6 +332,11 @@ class MySQLToBigQueryOperator(BaseOperator):
 
     def execute(self, context):
         serialize_process_list = json.loads(str(self.list_processes_to_run))
+        destination_dataset_table = general.gen_bq_dataset_table(
+            project_id=self.destination_project_id,
+            destination_table_id=self.destination_table_id,
+            partition=self.partition,
+        )
         if self.table_schema:
             autodetect = False
             schema_fields = self.table_schema
@@ -376,11 +381,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                     task_id="{}_gcs_to_bq".format(self.task_id),
                     bucket=self.bucket,
                     source_objects=gs_file.gs_source,
-                    destination_project_dataset_table=general.gen_bq_dataset_table(
-                        project_id=self.destination_project_id,
-                        destination_table_id=self.destination_table_id,
-                        partition=self.partition,
-                    ),
+                    destination_project_dataset_table=destination_dataset_table,
                     schema_fields=schema_fields,
                     write_disposition=self.write_disposition,
                     source_format=source_format,
@@ -481,13 +482,15 @@ class LoadQueryToTable(BaseOperator):
         try:
             self.log.info("Executing create query")
 
+            destination_dataset_table = general.gen_bq_dataset_table(
+                project_id=self.destination_project_id,
+                destination_table_id=self.destination_table_id,
+                partition=self.partition,
+            )
+
             cursor.run_query(
                 sql=self.query,
-                destination_dataset_table=general.gen_bq_dataset_table(
-                    project_id=self.destination_project_id,
-                    destination_table_id=self.destination_table_id,
-                    partition=self.partition,
-                ),
+                destination_dataset_table=destination_dataset_table,
                 create_disposition=self.create_disposition,
                 write_disposition=self.write_disposition,
                 allow_large_results=True,
@@ -496,12 +499,14 @@ class LoadQueryToTable(BaseOperator):
                 cluster_fields=self.cluster_fields,
             )
             self.log.info(
-                "Succesfully loaded data for {} partition".format(self.output_table)
+                "Succesfully loaded data for {} partition".format(
+                    destination_dataset_table
+                )
             )
             return True
         except Exception:
             self.log.error(
-                "Could not load data for {} partition".format(self.output_table)
+                "Could not load data for {} partition".format(destination_dataset_table)
             )
             raise
 
