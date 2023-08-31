@@ -323,7 +323,6 @@ class MySQLToBigQueryOperator(BaseOperator):
         if self.table_schema:
             autodetect = False
             schema_fields = self.table_schema
-            # general.generate_bq_schema(self.table_schema)
         else:
             autodetect = True
             schema_fields = None
