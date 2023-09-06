@@ -212,8 +212,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
 
 class MySQLToBigQueryOperator(BaseOperator):
     """
-    Handles query transfers from a Microsoft SQL Server database to a Google Cloud Storage bucket,
-    then to Google BigQuery.
+    Handles query transfers from a MySQ database to a Google Cloud Storage bucket, then to Google BigQuery.
 
     Paramters
     ---------
