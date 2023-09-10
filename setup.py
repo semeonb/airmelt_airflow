@@ -18,5 +18,6 @@ setuptools.setup(
         "apache-airflow-providers-microsoft-mssql==3.4.2",
         "apache-airflow-providers-sqlite==3.4.3",
         "apache-airflow-providers-mysql==5.2.1",
+        "astronomer-cosmos==1.1.0",
     ],
 )
