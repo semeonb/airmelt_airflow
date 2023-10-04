@@ -36,13 +36,13 @@ class BigQuery(object):
     
     def create_table(
         self,
-        datasetName,
-        tableName,
+        dataset_name,
+        table_name,
         schema,
         partition_col_name=None,
         expirtion_days=None,
     ):
-        table_ref = self.bq_client.dataset(datasetName).table(tableName)
+        table_ref = self.bq_client.dataset(dataset_name).table(table_name)
         table = self.bq_client.get_table(table_ref)
         if table:
             return True
