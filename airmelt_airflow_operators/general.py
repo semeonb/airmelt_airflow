@@ -2,15 +2,19 @@ import logging
 import re
 from typing import Any
 import os
-from datetime import datetime
+from datetime import datetime, timedelta
 import json
 from google.cloud import bigquery
 from airflow.models import BaseOperator, Variable
 from airflow.utils.decorators import apply_defaults
 
 
-def extract_date(text):
-    # Define a regex pattern to match the date format "YYYY-MM-DD"
+def extract_date(text, use_default=True, days_offset=0):
+    """
+    Define a regex pattern to match the date format "YYYY-MM-DD"
+    text: the text to be searched
+    days_offset: the number of days to offset from the default date
+    """
     date_pattern = r"\d{4}-\d{2}-\d{2}"
 
     # Search for the pattern in the input text
@@ -18,9 +22,14 @@ def extract_date(text):
 
     # If a match is found, return the matched date
     if match:
-        return datetime.strptime(match.group(), "%Y-%m-%d")
+        date_parsed = datetime.strptime(match.group(), "%Y-%m-%d") - timedelta(days=days_offset)
+        return date_parsed.date()
     else:
-        return None
+        if use_default:
+            date_parsed = datetime.today() - timedelta(days=days_offset)
+            return date_parsed.date()
+        else:
+            return None
 
 
 def get_var(
@@ -110,10 +119,10 @@ def generate_bq_schema(schema_dict: dict):
             # Append a SchemaField for non-nested fields
             schema.append(
                 bigquery.SchemaField(
-                    i.get("name"),
-                    i.get("type"),
-                    i.get("mode"),
-                    i.get("description"),
+                    name=i.get("name"),
+                    field_type=i.get("type"),
+                    mode=i.get("mode"),
+                    description=i.get("description"),
                 )
             )
         else:
@@ -129,21 +138,21 @@ def generate_bq_schema(schema_dict: dict):
                 # Append a SchemaField for nested fields
                 nested_schema.append(
                     bigquery.SchemaField(
-                        k.get("name"),
-                        k.get("type"),
-                        k.get("mode"),
-                        k.get("description"),
+                        name=k.get("name"),
+                        field_type=k.get("type"),
+                        mode=k.get("mode"),
+                        description=k.get("description"),
                     )
                 )
 
             # Append a SchemaField for the entire nested structure
             schema.append(
                 bigquery.SchemaField(
-                    i.get("name"),
-                    i.get("type"),
-                    i.get("mode"),
-                    i.get("description"),
-                    (nested_schema),
+                    name=i.get("name"),
+                    field_type=i.get("type"),
+                    mode=i.get("mode"),
+                    description=i.get("description"),
+                    fields=(nested_schema),
                 )
             )
 
