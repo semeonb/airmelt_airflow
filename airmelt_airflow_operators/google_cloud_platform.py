@@ -9,10 +9,57 @@ from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
 )
 from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
 from airmelt_airflow_operators import general
+from google.cloud import bigquery
 
 NEWLINE_DELIMITED_JSON = "NEWLINE_DELIMITED_JSON"
 CSV = "CSV"
 
+
+class BigQuery(object):
+    def __init__(
+        self, 
+        bq_project_id: str, 
+        credentials_path=None
+    ):
+        """
+        BigQuery class
+        bq_project_id: Name of BQ project
+        credentials_path: Path to the credentials file
+        """
+        self.bq_project_id = bq_project_id
+        if not credentials_path:
+            self.bq_client = bigquery.Client(project=self.bq_project_id)
+        else:
+            self.bq_client = bigquery.Client.from_service_account_json(
+                credentials_path, project=self.bq_project_id
+            )
+    
+    def create_table(
+        self,
+        datasetName,
+        tableName,
+        schema,
+        partition_col_name=None,
+        expirtion_days=None,
+    ):
+        table_ref = self.bq_client.dataset(datasetName).table(tableName)
+        table = self.bq_client.get_table(table_ref)
+        if table:
+            return True
+        else:
+            if expirtion_days:
+                expiration_ms = 86400000 * expirtion_days
+            else:
+                expiration_ms = None
+            table = bigquery.Table(table_ref, schema=schema)
+            if partition_col_name:
+                table.time_partitioning = bigquery.TimePartitioning(
+                    type_=bigquery.TimePartitioningType.DAY,
+                    field=partition_col_name,
+                    expiration_ms=expiration_ms,
+                )
+            table = self.bq_client.create_table(table)
+            return table
 
 class MSSQLToBigQueryOperator(BaseOperator):
     """
