@@ -34,7 +34,7 @@ class BigQuery(object):
                 credentials_path, project=self.bq_project_id
             )
     
-    def create_table(
+    def create_bq_table(
         self,
         dataset_name,
         table_name,
@@ -42,24 +42,25 @@ class BigQuery(object):
         partition_col_name=None,
         expirtion_days=None,
     ):
+        # Get the dataset and table reference
         table_ref = self.bq_client.dataset(dataset_name).table(table_name)
-        table = self.bq_client.get_table(table_ref)
-        if table:
-            return True
+
+        # Set the table schema
+        if expirtion_days:
+            expiration_ms = 86400000 * expirtion_days
         else:
-            if expirtion_days:
-                expiration_ms = 86400000 * expirtion_days
-            else:
-                expiration_ms = None
-            table = bigquery.Table(table_ref, schema=schema)
-            if partition_col_name:
-                table.time_partitioning = bigquery.TimePartitioning(
-                    type_=bigquery.TimePartitioningType.DAY,
-                    field=partition_col_name,
-                    expiration_ms=expiration_ms,
-                )
-            table = self.bq_client.create_table(table)
-            return table
+            expiration_ms = None
+        # Create the table object
+        table_obj = bigquery.Table(table_ref, schema=schema)
+        if partition_col_name:
+            table_obj.time_partitioning = bigquery.TimePartitioning(
+                type_=bigquery.TimePartitioningType.DAY,
+                field=partition_col_name,
+                expiration_ms=expiration_ms,
+            )
+        # Create the table
+        self.bq_client.create_table(table_obj, exists_ok=True)
+        return self.bq_client.get_table(table_ref)
 
 class MSSQLToBigQueryOperator(BaseOperator):
     """
