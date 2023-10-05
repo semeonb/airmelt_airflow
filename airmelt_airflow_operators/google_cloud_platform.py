@@ -34,7 +34,7 @@ class BigQuery(object):
                 credentials_path, project=self.bq_project_id
             )
     
-    def create_bq_table(
+    def create_table(
         self,
         dataset_name,
         table_name,
@@ -61,6 +61,9 @@ class BigQuery(object):
         # Create the table
         self.bq_client.create_table(table_obj, exists_ok=True)
         return self.bq_client.get_table(table_ref)
+    
+    def insert_rows(self, table, rows_to_insert):
+        return self.bq_client.insert_rows(table, rows_to_insert)
 
 class MSSQLToBigQueryOperator(BaseOperator):
     """
