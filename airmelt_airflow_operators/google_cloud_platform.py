@@ -19,7 +19,8 @@ class BigQuery(object):
     def __init__(
         self, 
         bq_project_id: str, 
-        credentials_path=None
+        credentials_path=None,
+        bq_conn_id=None
     ):
         """
         BigQuery class
@@ -27,12 +28,15 @@ class BigQuery(object):
         credentials_path: Path to the credentials file
         """
         self.bq_project_id = bq_project_id
-        if not credentials_path:
-            self.bq_client = bigquery.Client(project=self.bq_project_id)
-        else:
+        if not credentials_path and bq_conn_id:
+            bq_hook = BigQueryHook(bigquery_conn_id=bq_conn_id, use_legacy_sql=False)
+            self.bq_client = bq_hook.get_client(project_id=self.bq_project_id)
+        elif credentials_path:
             self.bq_client = bigquery.Client.from_service_account_json(
                 credentials_path, project=self.bq_project_id
             )
+        else:
+            raise ValueError("Either credentials_path or bq_conn_id must be provided")
     
     def create_table(
         self,
