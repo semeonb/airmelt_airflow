@@ -1,5 +1,6 @@
 # The purpose of this package is to create custom operators for Google Cloud Platform
 import json
+import logging
 from airflow.models import BaseOperator
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 from airflow.providers.google.cloud.transfers.mssql_to_gcs import MSSQLToGCSOperator
@@ -20,23 +21,26 @@ class BigQuery(object):
         self, 
         bq_project_id: str, 
         credentials_path=None,
-        bq_conn_id=None
+        gcp_conn_id=None
     ):
         """
         BigQuery class
         bq_project_id: Name of BQ project
         credentials_path: Path to the credentials file
         """
+        self.logger = logging.getLogger(__name__)
         self.bq_project_id = bq_project_id
-        if not credentials_path and bq_conn_id:
-            bq_hook = BigQueryHook(bigquery_conn_id=bq_conn_id, use_legacy_sql=False)
+        if not credentials_path and gcp_conn_id:
+            self.logger.info("Using BQ connection id: {}".format(gcp_conn_id))
+            bq_hook = BigQueryHook(gcp_conn_id=gcp_conn_id, use_legacy_sql=False)
             self.bq_client = bq_hook.get_client(project_id=self.bq_project_id)
         elif credentials_path:
+            self.logger.info("Using credentials path: {}".format(credentials_path))
             self.bq_client = bigquery.Client.from_service_account_json(
                 credentials_path, project=self.bq_project_id
             )
         else:
-            raise ValueError("Either credentials_path or bq_conn_id must be provided")
+            raise ValueError("Either credentials_path or gcp_conn_id must be provided")
     
     def create_table(
         self,
@@ -477,7 +481,7 @@ class LoadQueryToTable(BaseOperator):
 
     Parameters
     ----------
-    bq_conn_id: str, required
+    gcp_conn_id: str, required
         The connection id for big query
     destination_project_id: str, required
         The output project id
@@ -506,7 +510,7 @@ class LoadQueryToTable(BaseOperator):
 
     def __init__(
         self,
-        bq_conn_id,
+        gcp_conn_id,
         query,
         destination_project_id,
         destination_table_id,
@@ -519,7 +523,7 @@ class LoadQueryToTable(BaseOperator):
         **kwargs,
     ):
         super(LoadQueryToTable, self).__init__(*args, **kwargs)
-        self.bq_conn_id = bq_conn_id
+        self.gcp_conn_id = gcp_conn_id
         self.destination_project_id = destination_project_id
         self.query = query
         self.destination_table_id = destination_table_id
@@ -530,7 +534,7 @@ class LoadQueryToTable(BaseOperator):
         self.partition = partition
 
     def execute(self, context):
-        bq_hook = BigQueryHook(bigquery_conn_id=self.bq_conn_id, use_legacy_sql=False)
+        bq_hook = BigQueryHook(bigquery_conn_id=self.gcp_conn_id, use_legacy_sql=False)
         conn = bq_hook.get_conn()
         cursor = conn.cursor()
         try:
@@ -574,7 +578,7 @@ class RunQuery(BaseOperator):
 
     Parameters
     ----------
-    bq_conn_id: str, required
+    gcp_conn_id: str, required
         The connection id for big query
     query: str, required
         Query to run
@@ -585,13 +589,13 @@ class RunQuery(BaseOperator):
         "query",
     ]
 
-    def __init__(self, bq_conn_id, query, *args, **kwargs):
+    def __init__(self, gcp_conn_id, query, *args, **kwargs):
         super(RunQuery, self).__init__(*args, **kwargs)
-        self.bq_conn_id = bq_conn_id
+        self.gcp_conn_id = gcp_conn_id
         self.query = query
 
     def execute(self, context):
-        bq_hook = BigQueryHook(bigquery_conn_id=self.bq_conn_id, use_legacy_sql=False)
+        bq_hook = BigQueryHook(bigquery_conn_id=self.gcp_conn_id, use_legacy_sql=False)
         conn = bq_hook.get_conn()
         cursor = conn.cursor()
 
