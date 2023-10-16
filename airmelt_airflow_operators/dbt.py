@@ -59,8 +59,6 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         method="service-account",
         threads=1,
         dbt_executable_path=None,
-        *args,
-        **kwargs
     ):
         super().__init__(
             group_id,
@@ -82,8 +80,6 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
             project_config=ProjectConfig(dbt_project_path),
             execution_config=ExecutionConfig(dbt_executable_path=dbt_executable_path),
             render_config=RenderConfig(select=["path:{}".format(dbt_model_path)]),
-            *args,
-            **kwargs
         )
 
 
