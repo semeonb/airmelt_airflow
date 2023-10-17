@@ -6,15 +6,7 @@ from datetime import datetime, timedelta
 import json
 from google.cloud import bigquery
 from airflow.models import BaseOperator, Variable
-from airflow.operators.python import PythonOperator
 from airflow.utils.decorators import apply_defaults
-
-
-def log_params(**kwargs):
-    """Log the parameters passed to the task"""
-    logger = logging.getLogger(__name__)
-    for key, value in kwargs.items():
-        logger.info(f"{key}: {value}")
 
 
 def extract_date(text, use_default=True, days_offset=0):
@@ -197,6 +189,7 @@ class DagStartOperator(BaseOperator):
 
     def execute(self, context):
         logger = logging.getLogger(__name__)
+        logger.info("Variables:")
         for key, value in self.arguments_to_log.items():
             logger.info(f"{key}: {value}")
 
