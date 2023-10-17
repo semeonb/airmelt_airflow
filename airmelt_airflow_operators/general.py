@@ -189,7 +189,7 @@ class DagStartOperator(BaseOperator):
 
     def execute(self, context):
         logger = logging.getLogger(__name__)
-        logger.info("DAG execution started")ß
+        logger.info("DAG execution started")
         for key, value in self.arguments_to_log.items():
             logger.info(f"{key}: {value}")
 
