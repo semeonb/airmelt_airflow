@@ -9,6 +9,13 @@ from airflow.models import BaseOperator, Variable
 from airflow.utils.decorators import apply_defaults
 
 
+def log_params(**kwargs):
+    """Log the parameters passed to the task"""
+    logger = logging.getLogger(__name__)
+    for key, value in kwargs.items():
+        logger.info(f"{key}: {value}")
+
+
 def extract_date(text, use_default=True, days_offset=0):
     """
     Define a regex pattern to match the date format "YYYY-MM-DD"
@@ -22,7 +29,9 @@ def extract_date(text, use_default=True, days_offset=0):
 
     # If a match is found, return the matched date
     if match:
-        date_parsed = datetime.strptime(match.group(), "%Y-%m-%d") - timedelta(days=days_offset)
+        date_parsed = datetime.strptime(match.group(), "%Y-%m-%d") - timedelta(
+            days=days_offset
+        )
         return date_parsed.date()
     else:
         if use_default:
