@@ -6,6 +6,7 @@ from datetime import datetime, timedelta
 import json
 from google.cloud import bigquery
 from airflow.models import BaseOperator, Variable
+from airflow.operators.python import PythonOperator
 from airflow.utils.decorators import apply_defaults
 
 
@@ -186,6 +187,18 @@ class SuccessOperator(BaseOperator):
 
     def execute(self, context):
         pass
+
+
+class DagStartOperator(BaseOperator):
+    @apply_defaults
+    def __init__(self, arguments_to_log={}, *args, **kwargs):
+        self.arguments_to_log = arguments_to_log
+        super().__init__(*args, **kwargs)
+
+    def execute(self, context):
+        logger = logging.getLogger(__name__)
+        for key, value in self.arguments_to_log.items():
+            logger.info(f"{key}: {value}")
 
 
 class GSFile(object):
