@@ -83,12 +83,3 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
             *args,
             **kwargs,
         )
-
-
-# DbtTaskGroup(
-#         group_id="run_dbt",
-#         project_config=ProjectConfig(get_dbt_project_path(DBT_PROFILE_NAME)),
-#         profile_config=profile_config,
-#         execution_config=execution_config,
-#         render_config=RenderConfig(select=["path:{}".format(MODEL_PATH)]),
-#         )
