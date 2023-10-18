@@ -17,12 +17,7 @@ CSV = "CSV"
 
 
 class BigQuery(object):
-    def __init__(
-        self, 
-        bq_project_id: str, 
-        credentials_path=None,
-        gcp_conn_id=None
-    ):
+    def __init__(self, bq_project_id: str, credentials_path=None, gcp_conn_id=None):
         """
         BigQuery class
         bq_project_id: Name of BQ project
@@ -41,7 +36,7 @@ class BigQuery(object):
             )
         else:
             raise ValueError("Either credentials_path or gcp_conn_id must be provided")
-    
+
     def create_table(
         self,
         dataset_name,
@@ -49,9 +44,21 @@ class BigQuery(object):
         schema,
         partition_col_name=None,
         expirtion_days=None,
+        restart=False,
     ):
+        """
+        dataset_name: Name of the dataset
+        table_name: Name of the table
+        schema: Schema of the table
+        partition_col_name: Name of the partition column
+        expirtion_days: Number of days to expire the partition
+        restart: If True, delete the table and recreate it
+        """
         # Get the dataset and table reference
         table_ref = self.bq_client.dataset(dataset_name).table(table_name)
+
+        if restart:
+            self.bq_client.delete_table(table_ref, not_found_ok=True)
 
         # Set the table schema
         if expirtion_days:
@@ -69,9 +76,10 @@ class BigQuery(object):
         # Create the table
         self.bq_client.create_table(table_obj, exists_ok=True)
         return self.bq_client.get_table(table_ref)
-    
+
     def insert_rows(self, table, rows_to_insert):
         return self.bq_client.insert_rows(table, rows_to_insert)
+
 
 class MSSQLToBigQueryOperator(BaseOperator):
     """
