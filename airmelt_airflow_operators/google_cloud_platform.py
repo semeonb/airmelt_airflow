@@ -80,6 +80,15 @@ class BigQuery(object):
     def insert_rows(self, table, rows_to_insert):
         return self.bq_client.insert_rows(table, rows_to_insert)
 
+    def run_query(self, query, use_legacy_sql=False):
+        """
+        The method runs sql query
+        """
+        job_config = bigquery.QueryJobConfig()
+        job_config.use_legacy_sql = use_legacy_sql
+        query_job = self.bq_client.query(query, job_config=job_config)
+        return query_job.result()
+
 
 class MSSQLToBigQueryOperator(BaseOperator):
     """
@@ -152,13 +161,13 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self,
         mssql_conn_id,
         gcp_conn_id,
-        list_processes_to_run,
         sql,
         bucket,
         gs_path: str,
         destination_project_id,
         destination_table_id,
         table_schema=None,
+        list_processes_to_run=[],
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
         file_format="json",
