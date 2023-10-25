@@ -1,6 +1,7 @@
 # The purpose of this package is to create custom operators for Google Cloud Platform
 import json
 import logging
+import ast
 from airflow.models import BaseOperator
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 from airflow.providers.google.cloud.transfers.mssql_to_gcs import MSSQLToGCSOperator
@@ -136,6 +137,7 @@ class InsertRowsOperator(BaseOperator):
     def execute(self, context):
         # initialize BigQuery client
         client = BigQuery(self.destination_project_id, gcp_conn_id=self.gcp_conn_id)
+        data = ast.literal_eval(self.rows_to_insert)
 
         # create staging table if it doesn't exist, skip if it does
         table = client.create_table(
@@ -145,7 +147,7 @@ class InsertRowsOperator(BaseOperator):
             restart=True,
         )
 
-        errors = client.insert_rows(table, self.rows_to_insert)
+        errors = client.insert_rows(table, data)
         if errors:
             self.log.error(f"Error inserting rows: {errors}")
             raise Exception(f"Error inserting rows: {errors}")
