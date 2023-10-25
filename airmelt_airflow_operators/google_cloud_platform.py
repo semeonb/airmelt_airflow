@@ -99,13 +99,13 @@ class InsertRowsOperator(BaseOperator):
     ----------
     gcp_conn_id: str, required
         The connection id for big query
-    destination_project_id: str, required
+    destination_project_id: str, required, templated variable
         The output project id
     destination_table : str, required
         The destination Google BigQuery table.
     destination_dataset : str, required
         The destination Google BigQuery dataset.
-    rows_to_insert: list, required
+    task_input: list, required, templated variable
         The list of dictionaries to insert into the table
     """
 
@@ -113,6 +113,7 @@ class InsertRowsOperator(BaseOperator):
         "destination_dataset",
         "destination_table",
         "destination_project_id",
+        "task_input",
     ]
 
     def __init__(
@@ -122,7 +123,7 @@ class InsertRowsOperator(BaseOperator):
         destination_dataset,
         destination_table,
         table_schema,
-        rows_to_insert,
+        task_input,
         *args,
         **kwargs,
     ):
@@ -132,13 +133,13 @@ class InsertRowsOperator(BaseOperator):
         self.destination_table = destination_table
         self.destination_dataset = destination_dataset
         self.table_schema = table_schema
-        self.rows_to_insert = rows_to_insert
+        self.task_input = task_input
 
     def execute(self, context):
         # initialize BigQuery client
         client = BigQuery(self.destination_project_id, gcp_conn_id=self.gcp_conn_id)
-        self.log.info(self.rows_to_insert)
-        data = ast.literal_eval(self.rows_to_insert)
+        self.log.info(self.task_input)
+        data = ast.literal_eval(self.task_input)
 
         # create staging table if it doesn't exist, skip if it does
         table = client.create_table(
