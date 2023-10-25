@@ -90,6 +90,68 @@ class BigQuery(object):
         return query_job.result()
 
 
+class InsertRowsOperator(BaseOperator):
+    """
+    Handles inserting rows into a BigQuery table. The input is a list of dictionaries.
+
+    Parameters
+    ----------
+    gcp_conn_id: str, required
+        The connection id for big query
+    destination_project_id: str, required
+        The output project id
+    destination_table : str, required
+        The destination Google BigQuery table.
+    destination_dataset : str, required
+        The destination Google BigQuery dataset.
+    rows_to_insert: list, required
+        The list of dictionaries to insert into the table
+    """
+
+    template_fields = [
+        "destination_dataset",
+        "destination_table",
+        "destination_project_id",
+    ]
+
+    def __init__(
+        self,
+        gcp_conn_id,
+        destination_project_id,
+        destination_dataset,
+        destination_table,
+        table_schema,
+        rows_to_insert,
+        *args,
+        **kwargs,
+    ):
+        super(InsertRowsOperator, self).__init__(*args, **kwargs)
+        self.gcp_conn_id = gcp_conn_id
+        self.destination_project_id = destination_project_id
+        self.destination_table = destination_table
+        self.destination_dataset = destination_dataset
+        self.table_schema = table_schema
+        self.rows_to_insert = rows_to_insert
+
+    def execute(self, context):
+        # initialize BigQuery client
+        client = BigQuery(self.destination_project_id, gcp_conn_id=self.gcp_conn_id)
+
+        # create staging table if it doesn't exist, skip if it does
+        table = client.create_table(
+            dataset_name=self.destination_dataset,
+            table_name=self.destination_table,
+            schema=self.table_schema,
+            restart=True,
+        )
+
+        errors = client.insert_rows(table, self.rows_to_insert)
+        if errors:
+            self.log.error(f"Error inserting rows: {errors}")
+            raise Exception(f"Error inserting rows: {errors}")
+        return True
+
+
 class MSSQLToBigQueryOperator(BaseOperator):
     """
     Handles query transfers from a Microsoft SQL Server database to a Google Cloud Storage bucket,
@@ -280,7 +342,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
                         google_cloud_storage_conn_id=self.gcp_conn_id,
                     ).execute(context)
                 except Exception as ex:
-                    self.logger.error(
+                    self.log.error(
                         "Could not delete GS files in {}".format("gs://" + gs_file.path)
                     )
             return True
@@ -484,7 +546,7 @@ class MySQLToBigQueryOperator(BaseOperator):
                         google_cloud_storage_conn_id=self.gcp_conn_id,
                     ).execute(context)
                 except Exception as ex:
-                    self.logger.error(
+                    self.log.error(
                         "Could not delete GS files in {}".format("gs://" + gs_file.path)
                     )
             return True
