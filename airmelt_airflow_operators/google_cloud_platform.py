@@ -139,7 +139,7 @@ class InsertRowsOperator(BaseOperator):
         # initialize BigQuery client
         client = BigQuery(self.destination_project_id, gcp_conn_id=self.gcp_conn_id)
         self.log.info(self.task_input)
-        data = ast.literal_eval(self.task_input)
+        data = ast.literal_eval(str(self.task_input))
 
         # create staging table if it doesn't exist, skip if it does
         table = client.create_table(
