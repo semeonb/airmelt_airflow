@@ -107,6 +107,8 @@ class InsertRowsOperator(BaseOperator):
         The destination Google BigQuery dataset.
     task_input: list, required, templated variable
         The list of dictionaries to insert into the table
+    restart_table: bool, optional, default: False
+        If True, delete the table and recreate it
     """
 
     template_fields = [
@@ -124,6 +126,7 @@ class InsertRowsOperator(BaseOperator):
         destination_table,
         table_schema,
         task_input,
+        restart_table=False,
         *args,
         **kwargs,
     ):
@@ -134,6 +137,7 @@ class InsertRowsOperator(BaseOperator):
         self.destination_dataset = destination_dataset
         self.table_schema = table_schema
         self.task_input = task_input
+        self.restart_table = restart_table
 
     def execute(self, context):
         # initialize BigQuery client
@@ -145,7 +149,7 @@ class InsertRowsOperator(BaseOperator):
             dataset_name=self.destination_dataset,
             table_name=self.destination_table,
             schema=self.table_schema,
-            restart=True,
+            restart=self.restart_table,
         )
 
         errors = client.insert_rows(table, self.task_input)
