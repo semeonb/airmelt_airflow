@@ -137,6 +137,7 @@ class InsertRowsOperator(BaseOperator):
     def execute(self, context):
         # initialize BigQuery client
         client = BigQuery(self.destination_project_id, gcp_conn_id=self.gcp_conn_id)
+        self.log.info(self.rows_to_insert)
         data = ast.literal_eval(self.rows_to_insert)
 
         # create staging table if it doesn't exist, skip if it does
