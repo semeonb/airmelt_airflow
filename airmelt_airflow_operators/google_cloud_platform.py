@@ -170,8 +170,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         The source Microsoft SQL Server connection id.
     gcp_conn_id : str, required
         The destination Google Cloud connection id.
-    list_processes_to_run: str, required
-        List of processes to run. By default, all processes are run. In template variable use ["process1", "process2"]
     sql : str, required
         The SQL query to execute on the Microsoft SQL Server database.
     bucket : str
@@ -222,7 +220,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         "destination_table_id",
         "bucket",
         "destination_project_id",
-        "list_processes_to_run",
         "partition",
     ]
 
@@ -236,7 +233,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         destination_project_id,
         destination_table_id,
         table_schema=None,
-        list_processes_to_run=[],
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
         file_format="json",
@@ -264,7 +260,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.create_disposition = create_disposition
         self.time_partitioning = time_partitioning
         self.cluster_fields = cluster_fields
-        self.list_processes_to_run = list_processes_to_run
         self.file_format = file_format
         self.ignore_unknown_values = ignore_unknown_values
         self.allow_quoted_newlines = allow_quoted_newlines
@@ -275,7 +270,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.task_id = kwargs.get("task_id")
 
     def execute(self, context):
-        serialize_process_list = json.loads(str(self.list_processes_to_run))
         if self.table_schema:
             autodetect = False
             schema_fields = general.generate_bq_schema(self.table_schema)
@@ -287,72 +281,71 @@ class MSSQLToBigQueryOperator(BaseOperator):
             source_format = NEWLINE_DELIMITED_JSON
         else:
             source_format = CSV
-        if serialize_process_list == [] or self.task_id in serialize_process_list:
+        try:
+            self.log.info(
+                "Executing transfer task {tsk} to file {fl}".format(
+                    tsk=self.task_id, fl=gs_file.full_name
+                )
+            )
+            self.log.info("bucket: {b}; ".format(b=self.bucket))
+            # Execute MSSQLToGCSOperator to transfer data to GCS
+            MSSQLToGCSOperator(
+                task_id="{}_mssql_to_gcs".format(self.task_id),
+                mssql_conn_id=self.mssql_conn_id,
+                gcp_conn_id=self.gcp_conn_id,
+                sql=self.sql,
+                bucket=self.bucket,
+                filename=gs_file.full_name,
+                schema=schema_fields,
+                dag=self.dag,
+                export_format="JSON",
+            ).execute(context)
+
+            self.log.info(
+                "The file {} has been exported to GCS".format(gs_file.full_name)
+            )
+
+            # Execute GCSToBigQueryOperator to load data from GCS to BigQuery
+            GCSToBigQueryOperator(
+                task_id="{}_gcs_to_bq".format(self.task_id),
+                bucket=self.bucket,
+                source_objects=gs_file.gs_source,
+                destination_project_dataset_table=general.gen_bq_dataset_table(
+                    project_id=self.destination_project_id,
+                    destination_table_id=self.destination_table_id,
+                    partition=self.partition,
+                ),
+                schema_fields=schema_fields,
+                write_disposition=self.write_disposition,
+                source_format=source_format,
+                create_disposition=self.create_disposition,
+                ignore_unknown_values=self.ignore_unknown_values,
+                allow_quoted_newlines=self.allow_quoted_newlines,
+                allow_jagged_rows=self.allow_jagged_rows,
+                dag=self.dag,
+                gcp_conn_id=self.gcp_conn_id,
+                autodetect=autodetect,
+            ).execute(context)
+        except Exception as ex:
+            self.log.error(
+                "Could not load data from MSSQL {tsk}: {ex}".format(
+                    tsk=self.task_id, ex=ex
+                )
+            )
+            raise
+        if self.delete_files_after_import:
             try:
-                self.log.info(
-                    "Executing transfer task {tsk} to file {fl}".format(
-                        tsk=self.task_id, fl=gs_file.full_name
-                    )
-                )
-                self.log.info("bucket: {b}; ".format(b=self.bucket))
-                # Execute MSSQLToGCSOperator to transfer data to GCS
-                MSSQLToGCSOperator(
-                    task_id="{}_mssql_to_gcs".format(self.task_id),
-                    mssql_conn_id=self.mssql_conn_id,
-                    gcp_conn_id=self.gcp_conn_id,
-                    sql=self.sql,
-                    bucket=self.bucket,
-                    filename=gs_file.full_name,
-                    schema=schema_fields,
+                GCSDeleteObjectsOperator(
+                    bucket_name=self.bucket,
+                    prefix="gs://" + gs_file.path,
                     dag=self.dag,
-                    export_format="JSON",
-                ).execute(context)
-
-                self.log.info(
-                    "The file {} has been exported to GCS".format(gs_file.full_name)
-                )
-
-                # Execute GCSToBigQueryOperator to load data from GCS to BigQuery
-                GCSToBigQueryOperator(
-                    task_id="{}_gcs_to_bq".format(self.task_id),
-                    bucket=self.bucket,
-                    source_objects=gs_file.gs_source,
-                    destination_project_dataset_table=general.gen_bq_dataset_table(
-                        project_id=self.destination_project_id,
-                        destination_table_id=self.destination_table_id,
-                        partition=self.partition,
-                    ),
-                    schema_fields=schema_fields,
-                    write_disposition=self.write_disposition,
-                    source_format=source_format,
-                    create_disposition=self.create_disposition,
-                    ignore_unknown_values=self.ignore_unknown_values,
-                    allow_quoted_newlines=self.allow_quoted_newlines,
-                    allow_jagged_rows=self.allow_jagged_rows,
-                    dag=self.dag,
-                    gcp_conn_id=self.gcp_conn_id,
-                    autodetect=autodetect,
+                    google_cloud_storage_conn_id=self.gcp_conn_id,
                 ).execute(context)
             except Exception as ex:
                 self.log.error(
-                    "Could not load data from MSSQL {tsk}: {ex}".format(
-                        tsk=self.task_id, ex=ex
-                    )
+                    "Could not delete GS files in {}".format("gs://" + gs_file.path)
                 )
-                raise
-            if self.delete_files_after_import:
-                try:
-                    GCSDeleteObjectsOperator(
-                        bucket_name=self.bucket,
-                        prefix="gs://" + gs_file.path,
-                        dag=self.dag,
-                        google_cloud_storage_conn_id=self.gcp_conn_id,
-                    ).execute(context)
-                except Exception as ex:
-                    self.log.error(
-                        "Could not delete GS files in {}".format("gs://" + gs_file.path)
-                    )
-            return True
+        return True
 
 
 class MySQLToBigQueryOperator(BaseOperator):
