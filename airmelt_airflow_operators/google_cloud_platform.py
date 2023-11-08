@@ -232,6 +232,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         gs_path: str,
         destination_project_id,
         destination_table_id,
+        task_id: str,
         table_schema=None,
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
@@ -267,7 +268,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.shard_data = shard_data
         self.delete_files_after_import = delete_files_after_import
         self.partition = partition
-        self.task_id = kwargs.get("task_id")
+        self.task_id = task_id
 
     def execute(self, context):
         if self.table_schema:
