@@ -248,7 +248,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         *args,
         **kwargs,
     ):
-        super(MSSQLToBigQueryOperator, self).__init__(*args, **kwargs)
+        super(MSSQLToBigQueryOperator, self).__init__(task_id, *args, **kwargs)
         self.mssql_conn_id = mssql_conn_id
         self.gcp_conn_id = gcp_conn_id
         self.sql = sql
