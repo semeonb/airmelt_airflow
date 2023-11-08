@@ -232,7 +232,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         gs_path: str,
         destination_project_id,
         destination_table_id,
-        task_id: str,
         table_schema=None,
         create_disposition="CREATE_IF_NEEDED",
         write_disposition="WRITE_APPEND",
@@ -248,7 +247,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         *args,
         **kwargs,
     ):
-        super(MSSQLToBigQueryOperator, self).__init__(task_id, *args, **kwargs)
+        super(MSSQLToBigQueryOperator, self).__init__(*args, **kwargs)
         self.mssql_conn_id = mssql_conn_id
         self.gcp_conn_id = gcp_conn_id
         self.sql = sql
@@ -268,7 +267,6 @@ class MSSQLToBigQueryOperator(BaseOperator):
         self.shard_data = shard_data
         self.delete_files_after_import = delete_files_after_import
         self.partition = partition
-        self.task_id = task_id
 
     def execute(self, context):
         if self.table_schema:
@@ -284,14 +282,14 @@ class MSSQLToBigQueryOperator(BaseOperator):
             source_format = CSV
         try:
             self.log.info(
-                "Executing transfer task {tsk} to file {fl}".format(
-                    tsk=self.task_id, fl=gs_file.full_name
+                "Executing transfer task to table {tbl} to file {fl}".format(
+                    tsk=self.destination_table_id, fl=gs_file.full_name
                 )
             )
             self.log.info("bucket: {b}; ".format(b=self.bucket))
             # Execute MSSQLToGCSOperator to transfer data to GCS
             MSSQLToGCSOperator(
-                task_id="{}_mssql_to_gcs".format(self.task_id),
+                task_id="{}_mssql_to_gcs".format(self.destination_table_id),
                 mssql_conn_id=self.mssql_conn_id,
                 gcp_conn_id=self.gcp_conn_id,
                 sql=self.sql,
@@ -308,7 +306,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
 
             # Execute GCSToBigQueryOperator to load data from GCS to BigQuery
             GCSToBigQueryOperator(
-                task_id="{}_gcs_to_bq".format(self.task_id),
+                task_id="{}_gcs_to_bq".format(self.destination_table_id),
                 bucket=self.bucket,
                 source_objects=gs_file.gs_source,
                 destination_project_dataset_table=general.gen_bq_dataset_table(
@@ -329,8 +327,8 @@ class MSSQLToBigQueryOperator(BaseOperator):
             ).execute(context)
         except Exception as ex:
             self.log.error(
-                "Could not load data from MSSQL {tsk}: {ex}".format(
-                    tsk=self.task_id, ex=ex
+                "Could not load data from MSSQL {tbl}: {ex}".format(
+                    tbl=self.destination_table_id, ex=ex
                 )
             )
             raise
