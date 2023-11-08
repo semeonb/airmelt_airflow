@@ -283,7 +283,7 @@ class MSSQLToBigQueryOperator(BaseOperator):
         try:
             self.log.info(
                 "Executing transfer task to table {tbl} to file {fl}".format(
-                    tsk=self.destination_table_id, fl=gs_file.full_name
+                    tbl=self.destination_table_id, fl=gs_file.full_name
                 )
             )
             self.log.info("bucket: {b}; ".format(b=self.bucket))
