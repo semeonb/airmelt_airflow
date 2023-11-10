@@ -20,5 +20,7 @@ setuptools.setup(
         "apache-airflow-providers-mysql==5.2.1",
         "astronomer-cosmos==1.1.0",
         "pyYaml==6.0.1",
+        "connexion==2.14.2",
+        "Werkzeug==2.2.3",
     ],
 )
