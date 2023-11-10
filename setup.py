@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="airmelt_airflow",
-    version="0.0.4",
+    version="0.0.5",
     author="Semeon Balagula @ Airmelt",
     description="Airflow Utilities",
     packages=["airmelt_airflow_operators"],
@@ -19,6 +19,7 @@ setuptools.setup(
         "apache-airflow-providers-sqlite==3.4.3",
         "apache-airflow-providers-mysql==5.2.1",
         "astronomer-cosmos==1.1.0",
+        "dbt-bigquery==1.6.7",
         "pyYaml==6.0.1",
         "connexion==2.14.2",
         "Werkzeug==2.2.3",
