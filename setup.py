@@ -8,6 +8,7 @@ setuptools.setup(
     description="Airflow Utilities",
     packages=["airmelt_airflow_operators"],
     install_requires=[
+        "urllib3==1.26.18",
         "mysqlclient==2.2.0",
         "apache-airflow==2.7.1",
         "apache-airflow-providers-common-sql==1.7.0",
