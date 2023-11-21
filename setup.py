@@ -9,6 +9,7 @@ setuptools.setup(
     packages=["airmelt_airflow_operators"],
     install_requires=[
         "cython==0.29.35",
+        "pymssql --no-build-isolation",
         "mysqlclient==2.2.0",
         "apache-airflow==2.7.1",
         "apache-airflow-providers-common-sql==1.7.0",
