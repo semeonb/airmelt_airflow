@@ -15,7 +15,6 @@ setuptools.setup(
         "apache-airflow-providers-google==10.6.0",
         "apache-airflow-providers-http==4.5.0",
         "apache-airflow-providers-imap==3.3.0",
-        "apache-airflow-providers-sqlite==3.4.3",
         "astronomer-cosmos==1.1.0",
         "pyYaml==6.0.1",
         "connexion==2.14.2",
