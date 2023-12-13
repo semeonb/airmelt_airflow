@@ -1,0 +1,11 @@
+README.md
+setup.py
+airmelt_airflow.egg-info/PKG-INFO
+airmelt_airflow.egg-info/SOURCES.txt
+airmelt_airflow.egg-info/dependency_links.txt
+airmelt_airflow.egg-info/requires.txt
+airmelt_airflow.egg-info/top_level.txt
+airmelt_airflow_operators/__init__.py
+airmelt_airflow_operators/dbt.py
+airmelt_airflow_operators/general.py
+airmelt_airflow_operators/google_cloud_platform.py
