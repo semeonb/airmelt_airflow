@@ -279,7 +279,7 @@ class RunQuery(BaseOperator):
         self.query = query
 
     def execute(self, context):
-        bq_hook = BigQueryHook(bigquery_conn_id=self.gcp_conn_id, use_legacy_sql=False)
+        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
         conn = bq_hook.get_conn()
         cursor = conn.cursor()
 
