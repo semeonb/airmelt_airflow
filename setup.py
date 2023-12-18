@@ -10,7 +10,7 @@ setuptools.setup(
     install_requires=[
         "urllib3==1.26.18",
         "mysqlclient==2.2.0",
-        "apache-airflow==2.7.2",
+        "apache-airflow==2.7.1",
         "pendulum==3.0.0",
         "apache-airflow-providers-ftp==3.5.0",
         "apache-airflow-providers-google==10.6.0",
