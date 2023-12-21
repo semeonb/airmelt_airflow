@@ -8,7 +8,7 @@ The repository's primary focus is to provide a cohesive set of tools to simplify
 1. Install conda
 2. Clone the repo from https://github.com/semeonb/airmelt_airflow
 3. Create a conda environment running *python 3.9* and activate it
-4. Go to the airmelt utils *home* folder and run `pip install .`
+4. Go to the airmelt airflow *home* folder and run `pip install .`
 
 # Contents #
 
