@@ -335,7 +335,7 @@ class WaitForValueBigQueryOperator(BaseOperator):
 
         while datetime.now() < end_time:
             # Run the query using BigQueryHook
-            bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
+            bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
             conn = bq_hook.get_conn()
             cursor = conn.cursor()
             cursor.execute(self.sql)
