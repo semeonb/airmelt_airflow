@@ -343,9 +343,9 @@ class WaitForValueBigQueryOperator(BaseOperator):
             cursor.execute(self.sql)
             result = cursor.fetchone()
 
-            self.log.info("The result is: \n {}".format(result))
+            self.log.info("The result is: \n {}".format(result[0]))
 
-            if result and result[0] == self.desired_value:
+            if result[0] == self.desired_value:
                 success = True
                 break
 
