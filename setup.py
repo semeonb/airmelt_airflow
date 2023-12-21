@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="airmelt_airflow",
-    version="0.0.8",
+    version="0.0.9",
     author="Semeon Balagula @ Airmelt",
     description="Airflow Utilities",
     packages=["airmelt_airflow_operators"],

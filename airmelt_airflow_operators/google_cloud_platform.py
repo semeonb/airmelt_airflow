@@ -300,8 +300,10 @@ class WaitForValueBigQueryOperator(BaseOperator):
         The SQL query to run
     gcp_conn_id: str, required
         The connection id for big query
-    timeout: datetime.timedelta, optional
-        The time to wait for the condition to be met
+    timeout: int, optional
+        The time in SECONDS to wait for the condition to be met
+    retry_delay: int, optional
+        The time in SECONDS to wait between retries
     desired_value: int, optional
         The desired value to be returned by the query
     """
@@ -313,9 +315,9 @@ class WaitForValueBigQueryOperator(BaseOperator):
         self,
         sql,
         gcp_conn_id,
-        timeout=timedelta(hours=1),
+        timeout=60,
         desired_value=1,
-        retry_delay=timedelta(seconds=60),
+        retry_delay=10,
         *args,
         **kwargs,
     ):
@@ -328,7 +330,7 @@ class WaitForValueBigQueryOperator(BaseOperator):
 
     def execute(self, context):
         start_time = datetime.now()
-        end_time = start_time + self.timeout
+        end_time = start_time + timedelta(seconds=self.timeout)
         success = False
 
         self.log.info("The query is: \n {}".format(self.sql))
@@ -348,7 +350,9 @@ class WaitForValueBigQueryOperator(BaseOperator):
                 break
 
             self.log.info(
-                "Waiting for the desired condition. Retrying in 10 seconds..."
+                "Waiting for the desired condition. Retrying in {} seconds...".format(
+                    self.retry_delay
+                )
             )
             time.sleep(self.retry_delay)
 
