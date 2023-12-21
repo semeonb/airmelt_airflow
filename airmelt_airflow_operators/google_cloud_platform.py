@@ -282,7 +282,7 @@ class RunQuery(BaseOperator):
         try:
             self.log.info("Executing query")
             self.log.info("The query is: \n {}".format(self.query))
-            cursor.execute(sql=self.query)
+            cursor.execute(self.query)
             self.log.info("Succesfully executed query")
         except Exception as ex:
             self.log.error("Could not qun the query: {}".format(ex))
@@ -338,7 +338,7 @@ class WaitForValueBigQueryOperator(BaseOperator):
             bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
             conn = bq_hook.get_conn()
             cursor = conn.cursor()
-            cursor.execute(sql=self.sql)
+            cursor.execute(self.sql)
             result = cursor.fetchone()
 
             self.log.info("The result is: \n {}".format(result))
