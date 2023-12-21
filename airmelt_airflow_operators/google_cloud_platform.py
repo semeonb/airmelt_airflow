@@ -1,13 +1,10 @@
 # The purpose of this package is to create custom operators for Google Cloud Platform
-import json
 import logging
-import ast
+from datetime import datetime, timedelta
+import time
 from airflow.models import BaseOperator
+from airflow.utils.decorators import apply_defaults
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
-from airflow.providers.google.cloud.transfers.gcs_to_bigquery import (
-    GCSToBigQueryOperator,
-)
-from airflow.providers.google.cloud.operators.gcs import GCSDeleteObjectsOperator
 from airmelt_airflow_operators import general
 from google.cloud import bigquery
 
@@ -292,3 +289,65 @@ class RunQuery(BaseOperator):
             self.log.error("Could not qun the query: {}".format(ex))
         result = cursor.fetchall()
         return result
+
+
+class WaitForValueBigQueryOperator(BaseOperator):
+    """
+    Custom Airflow operator that runs a BigQuery query until the specified condition is met.
+
+    Parameters
+
+    sql: str, required
+        The SQL query to run
+    gcp_conn_id: str, required
+        The connection id for big query
+    timeout: datetime.timedelta, optional
+        The time to wait for the condition to be met
+    desired_value: int, optional
+        The desired value to be returned by the query
+    """
+
+    template_fields = ("sql",)
+    ui_color = "#4ea4b8"
+
+    @apply_defaults
+    def __init__(
+        self,
+        sql,
+        gcp_conn_id,
+        timeout=timedelta(hours=1),
+        desired_value=1,
+        *args,
+        **kwargs,
+    ):
+        super(WaitForValueBigQueryOperator, self).__init__(*args, **kwargs)
+        self.sql = sql
+        self.gcp_conn_id = gcp_conn_id
+        self.timeout = timeout
+        self.desired_value = desired_value
+
+    def execute(self, context):
+        start_time = datetime.now()
+        end_time = start_time + self.timeout
+        success = False
+
+        while datetime.now() < end_time:
+            # Run the query using BigQueryHook
+            hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
+            result = hook.get_first(sql=self.sql)
+
+            if result and result[0] == self.desired_value:
+                success = True
+                break
+
+            self.log.info(
+                "Waiting for the desired condition. Retrying in 10 seconds..."
+            )
+            time.sleep(10)
+
+        if success:
+            self.log.info("Query returned the desired value.")
+        else:
+            self.log.error("Timeout reached. Query did not return the desired value.")
+
+        return success
