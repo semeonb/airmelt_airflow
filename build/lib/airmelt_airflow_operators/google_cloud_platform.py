@@ -3,7 +3,6 @@ import logging
 from datetime import datetime, timedelta
 import time
 from airflow.models import BaseOperator
-from airflow.utils.decorators import apply_defaults
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 from airmelt_airflow_operators import general
 from google.cloud import bigquery
@@ -310,7 +309,6 @@ class WaitForValueBigQueryOperator(BaseOperator):
     template_fields = ("sql",)
     ui_color = "#4ea4b8"
 
-    @apply_defaults
     def __init__(
         self,
         sql,

@@ -315,6 +315,7 @@ class WaitForValueBigQueryOperator(BaseOperator):
         gcp_conn_id,
         timeout=timedelta(hours=1),
         desired_value=1,
+        retry_delay=timedelta(seconds=60),
         *args,
         **kwargs,
     ):
@@ -323,16 +324,24 @@ class WaitForValueBigQueryOperator(BaseOperator):
         self.gcp_conn_id = gcp_conn_id
         self.timeout = timeout
         self.desired_value = desired_value
+        self.retry_delay = retry_delay
 
     def execute(self, context):
         start_time = datetime.now()
         end_time = start_time + self.timeout
         success = False
 
+        self.log.info("The query is: \n {}".format(self.sql))
+
         while datetime.now() < end_time:
             # Run the query using BigQueryHook
-            hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
-            result = hook.get_first(sql=self.sql)
+            bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
+            conn = bq_hook.get_conn()
+            cursor = conn.cursor()
+            cursor.execute(sql=self.sql)
+            result = cursor.fetchone()
+
+            self.log.info("The result is: \n {}".format(result))
 
             if result and result[0] == self.desired_value:
                 success = True
@@ -341,7 +350,7 @@ class WaitForValueBigQueryOperator(BaseOperator):
             self.log.info(
                 "Waiting for the desired condition. Retrying in 10 seconds..."
             )
-            time.sleep(10)
+            time.sleep(self.retry_delay)
 
         if success:
             self.log.info("Query returned the desired value.")
