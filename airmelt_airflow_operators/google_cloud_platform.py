@@ -362,3 +362,48 @@ class WaitForValueBigQueryOperator(BaseOperator):
             self.log.error("Timeout reached. Query did not return the desired value.")
 
         return success
+
+
+class SaveQueriesToTables(BaseOperator):
+    """
+    Handles saving queries specified in tuple pairs (table, query) in BigQuery. Each query will be saved in a separate table, specified in the first position of the pair.
+
+    Parameters
+    ----------
+    gcp_conn_id: str, required
+        The connection id for big query
+    destination_project_id: str, required, templated variable
+        The output project id
+    task_input: list, required, templated variable
+        The list of tuples (table, query)
+    """
+
+    template_fields = [
+        "destination_project_id",
+        "task_input",
+    ]
+
+    def __init__(
+        self,
+        gcp_conn_id,
+        destination_project_id,
+        task_input,
+        *args,
+        **kwargs,
+    ):
+        super(SaveQueriesToTables, self).__init__(*args, **kwargs)
+        self.gcp_conn_id = gcp_conn_id
+        self.destination_project_id = destination_project_id
+        self.task_input = task_input
+
+    def execute(self, context):
+        for table, query in self.task_input:
+            LoadQueryToTable(
+                task_id=self.task_id + f"_{table}",
+                gcp_conn_id=self.gcp_conn_id,
+                query=query,
+                destination_project_id=self.destination_project_id,
+                destination_table_id=table,
+                write_disposition="WRITE_TRUNCATE",
+                create_disposition="CREATE_IF_NEEDED",
+            )
