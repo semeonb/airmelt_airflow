@@ -40,6 +40,8 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         Number of threads to use for dbt execution, default is 1
     dbt_executable_path : PathLike, optional
         Path to the dbt executable, for example {os.environ['AIRFLOW_HOME']}/dbt_venv/bin/dbt
+    vars : str, optional
+        DBT variables to pass to the dbt command in format '{"key":"value"}' default is None
     """
 
     def __init__(
@@ -57,6 +59,7 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         method="service-account",
         threads=1,
         dbt_executable_path=None,
+        vars=None,
         *args,
         **kwargs,
     ):
@@ -80,6 +83,9 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
             project_config=ProjectConfig(dbt_project_path),
             execution_config=ExecutionConfig(dbt_executable_path=dbt_executable_path),
             render_config=RenderConfig(select=["path:{}".format(dbt_model_path)]),
+            operator_args={
+                "vars": vars,
+            },
             *args,
             **kwargs,
         )
