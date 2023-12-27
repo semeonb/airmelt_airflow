@@ -18,7 +18,7 @@ setuptools.setup(
         "boto3==1.28.0",
         "apache-airflow-providers-http==4.5.0",
         "apache-airflow-providers-imap==3.3.0",
-        "astronomer-cosmos==1.3.0",
+        "astronomer-cosmos==1.3.0a3",
         "pyYaml==6.0.1",
         "connexion==2.14.2",
         "Werkzeug==2.2.3",
