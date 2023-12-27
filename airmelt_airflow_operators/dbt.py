@@ -26,7 +26,7 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         Name of the dbt profile
     target_name : str, optional
         Name of the dbt target, usually the environment name (dev, prod, etc.)
-    connection_id : str, required
+    conn_id : str, required
         Name of the Airflow connection that contains the GCP credentials
     project_id : str, optional
         Name of the GCP project
@@ -51,7 +51,7 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         dbt_model_path=None,
         dbt_profile_name=None,
         target_name=None,
-        connection_id=None,
+        conn_id=None,
         project_id=None,
         dataset=None,
         keyfile=None,
@@ -68,7 +68,7 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
                 profile_name=dbt_profile_name,
                 target_name=target_name,
                 profile_mapping=GoogleCloudServiceAccountDictProfileMapping(
-                    conn_id=connection_id,
+                    conn_id=conn_id,
                     profile_args={
                         "project": project_id,
                         "dataset": dataset,
