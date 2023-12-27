@@ -68,7 +68,7 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
                 profile_name=dbt_profile_name,
                 target_name=target_name,
                 profile_mapping=GoogleCloudServiceAccountDictProfileMapping(
-                    connection_id=connection_id,
+                    conn_id=connection_id,
                     profile_args={
                         "project": project_id,
                         "dataset": dataset,
