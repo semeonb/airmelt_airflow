@@ -78,11 +78,11 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
                     },
                 ),
             ),
-            project_config=ProjectConfig(dbt_project_path, dbt_vars=dbt_vars),
+            project_config=ProjectConfig(dbt_project_path),
             execution_config=ExecutionConfig(dbt_executable_path=dbt_executable_path),
             render_config=RenderConfig(select=["path:{}".format(dbt_model_path)]),
             operator_args={
-                "vars": vars,
+                "vars": dbt_vars,
             },
             *args,
             **kwargs,
