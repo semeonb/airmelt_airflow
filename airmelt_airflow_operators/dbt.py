@@ -6,7 +6,6 @@ from cosmos import (
     RenderConfig,
 )
 from cosmos.profiles import (
-    GoogleCloudOauthProfileMapping,
     GoogleCloudServiceAccountDictProfileMapping,
 )
 
@@ -37,8 +36,6 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         Path to the GCP service account key file
     location : str, optional
         Location of the BigQuery dataset, default is "US"
-    method : str, optional
-        Method of authentication, default is "service-account", other options are "oauth" and "application-default"
     threads : int, optional
         Number of threads to use for dbt execution, default is 1
     dbt_executable_path : PathLike, optional
@@ -54,12 +51,10 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         dbt_model_path=None,
         dbt_profile_name=None,
         target_name=None,
-        connection_id=None,
         project_id=None,
         dataset=None,
         keyfile=None,
         location="US",
-        method="service-account",
         threads=1,
         dbt_executable_path=None,
         dbt_vars=None,
