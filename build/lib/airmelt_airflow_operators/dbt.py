@@ -5,9 +5,7 @@ from cosmos import (
     ExecutionConfig,
     RenderConfig,
 )
-from cosmos.profiles import (
-    GoogleCloudServiceAccountDictProfileMapping,
-)
+from cosmos.profiles import GoogleCloudOauthProfileMapping
 
 
 class AirflowDbtTaskGroup(DbtTaskGroup):
@@ -26,7 +24,7 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         Name of the dbt profile
     target_name : str, optional
         Name of the dbt target, usually the environment name (dev, prod, etc.)
-    conn_id : str, required
+    connection_id : str, optional
         Name of the Airflow connection that contains the GCP credentials
     project_id : str, optional
         Name of the GCP project
@@ -36,11 +34,13 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         Path to the GCP service account key file
     location : str, optional
         Location of the BigQuery dataset, default is "US"
+    method : str, optional
+        Method of authentication, default is "service-account", other options are "oauth" and "application-default"
     threads : int, optional
         Number of threads to use for dbt execution, default is 1
     dbt_executable_path : PathLike, optional
         Path to the dbt executable, for example {os.environ['AIRFLOW_HOME']}/dbt_venv/bin/dbt
-    dbt_vars : dict, optional
+    vars : str, optional
         DBT variables to pass to the dbt command in format '{"key":"value"}' default is None
     """
 
@@ -51,14 +51,14 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
         dbt_model_path=None,
         dbt_profile_name=None,
         target_name=None,
-        conn_id=None,
+        connection_id=None,
         project_id=None,
         dataset=None,
         keyfile=None,
         location="US",
+        method="service-account",
         threads=1,
         dbt_executable_path=None,
-        dbt_vars=None,
         *args,
         **kwargs,
     ):
@@ -67,12 +67,13 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
             profile_config=ProfileConfig(
                 profile_name=dbt_profile_name,
                 target_name=target_name,
-                profile_mapping=GoogleCloudServiceAccountDictProfileMapping(
-                    conn_id=conn_id,
+                profile_mapping=GoogleCloudOauthProfileMapping(
+                    conn_id=connection_id,
                     profile_args={
                         "project": project_id,
                         "dataset": dataset,
                         "location": location,
+                        "method": method,
                         "keyfile": keyfile,
                         "threads": threads,
                     },
@@ -81,9 +82,6 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
             project_config=ProjectConfig(dbt_project_path),
             execution_config=ExecutionConfig(dbt_executable_path=dbt_executable_path),
             render_config=RenderConfig(select=["path:{}".format(dbt_model_path)]),
-            operator_args={
-                "vars": dbt_vars,
-            },
             *args,
             **kwargs,
         )
