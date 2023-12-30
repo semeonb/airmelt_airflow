@@ -452,8 +452,8 @@ class MSSQLtoGCS(BaseOperator):
         bucket_name,
         destination_path,
         query,
-        pyodbc_connection: pyodbc.Connection,
-        rows_per_batch=10000,
+        mssql_connection_params: dict,
+        rows_per_batch=100000,
         *args,
         **kwargs,
     ):
@@ -462,7 +462,11 @@ class MSSQLtoGCS(BaseOperator):
         self.bucket_name = bucket_name
         self.destination_path = destination_path
         self.query = query
-        self.cursor = pyodbc_connection.cursor()
+        mssql_connection_string = ";".join(
+            [f"{key}={value}" for key, value in mssql_connection_params.items()]
+        )
+        connection = pyodbc.connect(mssql_connection_string)
+        self.cursor = connection.cursor()
         self.column_names = [column[0] for column in self.cursor.description]
         self.rows_per_batch = rows_per_batch
 
