@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="airmelt_airflow",
-    version="0.3.1",
+    version="0.3.2",
     author="Semeon Balagula @ Airmelt",
     description="Airflow Utilities",
     packages=["airmelt_airflow_operators"],
@@ -22,5 +22,6 @@ setuptools.setup(
         "pyYaml==6.0.1",
         "connexion==2.14.2",
         "Werkzeug==2.2.3",
+        "pyodbc==5.0.1",
     ],
 )
