@@ -3,9 +3,15 @@ import logging
 from datetime import datetime, timedelta
 import time
 from airflow.models import BaseOperator
+from airflow.providers.google.cloud.transfers.local_to_gcs import (
+    LocalFilesystemToGCSOperator,
+)
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 from airmelt_airflow_operators import general
 from google.cloud import bigquery
+import pyodbc
+import csv
+import os
 
 NEWLINE_DELIMITED_JSON = "NEWLINE_DELIMITED_JSON"
 CSV = "CSV"
@@ -83,6 +89,13 @@ class BigQuery(object):
         job_config.use_legacy_sql = use_legacy_sql
         query_job = self.bq_client.query(query, job_config=job_config)
         return query_job.result()
+
+    def get_table(self, dataset_name, table_name):
+        """
+        The method returns the table object
+        """
+        table_ref = self.bq_client.dataset(dataset_name).table(table_name)
+        return self.bq_client.get_table(table_ref)
 
 
 class InsertRowsOperator(BaseOperator):
@@ -250,9 +263,9 @@ class LoadQueryToTable(BaseOperator):
 
 
 class RunQuery(BaseOperator):
-    """Handles retrieving Firehose automated feeds from Sauron.
+    """
 
-    This operator drops the temporary output table
+    This operator runs query and drops the temporary output table
 
     ``query`` is a templated variable for this operator
 
@@ -407,3 +420,91 @@ class SaveQueriesToTables(BaseOperator):
                 write_disposition="WRITE_TRUNCATE",
                 create_disposition="CREATE_IF_NEEDED",
             )
+
+
+class MSSQLtoGCS(BaseOperator):
+    """
+    Handles executing MSSQL queries and saving the result in a Google Cloud Storage bucket.
+
+    ``query`` is a templated variable for this operator
+    ``bucket_name`` is a templated variable for this operator
+    ``destination_path`` is a templated variable for this operator
+
+
+    Parameters
+    ----------
+    gcp_conn_id: str, required
+        The connection id for big query
+    query: str, required
+        Query to run
+    bucket_name: str, required
+        Name of the GS bucket to save the data to
+    destination_path: str, required
+        GS Path to save the data in the bucket
+
+    """
+
+    template_fields = ["query"]
+
+    def __init__(
+        self,
+        gcp_conn_id,
+        bucket_name,
+        destination_path,
+        query,
+        pyodbc_connection: pyodbc.Connection,
+        rows_per_batch=10000,
+        *args,
+        **kwargs,
+    ):
+        super(MSSQLtoGCS, self).__init__(*args, **kwargs)
+        self.gcp_conn_id = gcp_conn_id
+        self.bucket_name = bucket_name
+        self.destination_path = destination_path
+        self.query = query
+        self.cursor = pyodbc_connection.cursor()
+        self.column_names = [column[0] for column in self.cursor.description]
+        self.rows_per_batch = rows_per_batch
+
+    def execute(self, context):
+        try:
+            self.cursor.execute(self.query)
+            self.log.info("Succesfully executed query")
+            # Fetching batches and saving them in GCS
+            batch_num = 0
+            while True:
+                # Fetching the rows in batches
+                batch = self.cursor.fetchmany(self.rows_per_batch)
+                file_name = "{task_id}_{batch_num}.csv".format(
+                    task_id=self.task_id, batch_num=batch_num
+                )
+                local_file_name = "/tmp/{}".format(file_name)
+                # Saving the batch to a local file
+                with open(local_file_name, "w", encoding="utf-8", newline="\n") as fp:
+                    writer = csv.writer(
+                        fp, lineterminator="\n", quoting=csv.QUOTE_ALL, quotechar='"'
+                    )
+                    writer.writerow(self.column_names)
+                    writer.writerows(batch)
+                # Saving the batch to GCS
+                destination_file_name = (
+                    "{destination_path}/{destination_file_name}".format(
+                        destnation_path=self.destination_path,
+                        destination_file_name=file_name,
+                    )
+                )
+                LocalFilesystemToGCSOperator(
+                    src=local_file_name,
+                    dst=destination_file_name,
+                    bucket=self.bucket_name,
+                    gcp_conn_id=self.gcp_conn_id,
+                )
+                # delete the local file
+                os.remove(local_file_name)
+                if not batch:
+                    break
+                batch_num += 1
+
+        except Exception as ex:
+            self.log.error("Could not qun the query: {}".format(ex))
+            raise
