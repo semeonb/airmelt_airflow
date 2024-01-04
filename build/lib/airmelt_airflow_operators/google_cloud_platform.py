@@ -275,17 +275,18 @@ class RunQuery(BaseOperator):
         The connection id for big query
     query: str, required
         Query to run
-
+    scalar: bool, optional, default: False indicates if the query returns a single value
     """
 
     template_fields = [
         "query",
     ]
 
-    def __init__(self, gcp_conn_id, query, *args, **kwargs):
+    def __init__(self, gcp_conn_id, query, scalar, *args, **kwargs):
         super(RunQuery, self).__init__(*args, **kwargs)
         self.gcp_conn_id = gcp_conn_id
         self.query = query
+        self.scalar = scalar
 
     def execute(self, context):
         bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
@@ -300,6 +301,8 @@ class RunQuery(BaseOperator):
         except Exception as ex:
             self.log.error("Could not qun the query: {}".format(ex))
         result = cursor.fetchall()
+        if len(result) == 1 and len(result[0]) == 1 and self.scalar:
+            result = result[0][0]
         return result
 
 
