@@ -3,13 +3,16 @@ import setuptools
 
 setuptools.setup(
     name="airmelt_airflow",
-    version="0.7.0",
+    version="0.8.0",
     author="Semeon Balagula @ Airmelt",
     description="Airflow Utilities",
     packages=["airmelt_airflow_operators"],
     install_requires=[
         "urllib3==1.26.18",
         "mysqlclient==2.2.0",
+        "SQLAlchemy==1.4.49",
+        "Flask-SQLAlchemy==2.5.1",
+        "Flask-Session==0.5.0",
         "apache-airflow==2.7.2",
         "pendulum==2.1.2",
         "apache-airflow-providers-ftp==3.5.0",
