@@ -7,6 +7,7 @@ from airflow.providers.google.cloud.transfers.local_to_gcs import (
     LocalFilesystemToGCSOperator,
 )
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
+from airflow.providers.google.cloud.hooks.gcs import GCSHook
 from airmelt_airflow_operators import general
 from google.cloud import bigquery
 from google.cloud import storage
@@ -28,8 +29,10 @@ class GoogleStorage(object):
         self.logger = logging.getLogger(__name__)
         self.project_id = project_id
         if not credentials_path and gcp_conn_id:
-            self.logger.info("Using GCP connection id: {}".format(gcp_conn_id))
-            self.storage_client = storage.Client(project=self.project_id)
+            self.logger.info("Using GCP Hook id: {}".format(gcp_conn_id))
+            gcs_hook = GCSHook(gcp_conn_id=gcp_conn_id)
+            self.storage_client = gcs_hook.get_conn(project_id=self.project_id)
+            self.logger.info("Using GCS hook")
         elif credentials_path:
             self.logger.info("Using credentials path: {}".format(credentials_path))
             self.storage_client = storage.Client.from_service_account_json(
