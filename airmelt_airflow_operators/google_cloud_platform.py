@@ -30,8 +30,8 @@ class GoogleStorage(object):
         self.project_id = project_id
         if not credentials_path and gcp_conn_id:
             self.logger.info("Using GCP Hook id: {}".format(gcp_conn_id))
-            gcs_hook = GCSHook(gcp_conn_id=gcp_conn_id)
-            self.storage_client = gcs_hook.get_conn(project_id=self.project_id)
+            gcs_hook = GCSHook(gcp_conn_id=gcp_conn_id, project_id=self.project_id)
+            self.storage_client = gcs_hook.get_conn()
             self.logger.info("Using GCS hook")
         elif credentials_path:
             self.logger.info("Using credentials path: {}".format(credentials_path))
