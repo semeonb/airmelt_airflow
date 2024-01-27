@@ -9,12 +9,43 @@ from airflow.providers.google.cloud.transfers.local_to_gcs import (
 from airflow.providers.google.cloud.hooks.bigquery import BigQueryHook
 from airmelt_airflow_operators import general
 from google.cloud import bigquery
+from google.cloud import storage
 import pyodbc
 import csv
 import os
 
 NEWLINE_DELIMITED_JSON = "NEWLINE_DELIMITED_JSON"
 CSV = "CSV"
+
+
+class GoogleStorage(object):
+    def __init__(self, project_id: str, credentials_path=None, gcp_conn_id=None):
+        """
+        GoogleStorage class
+        project_id: Name of GCP project
+        credentials_path: Path to the credentials file
+        """
+        self.logger = logging.getLogger(__name__)
+        self.project_id = project_id
+        if not credentials_path and gcp_conn_id:
+            self.logger.info("Using GCP connection id: {}".format(gcp_conn_id))
+            self.storage_client = storage.Client(project=self.project_id)
+        elif credentials_path:
+            self.logger.info("Using credentials path: {}".format(credentials_path))
+            self.storage_client = storage.Client.from_service_account_json(
+                credentials_path, project=self.project_id
+            )
+        else:
+            raise ValueError("Either credentials_path or gcp_conn_id must be provided")
+
+    def get_bucket(self, bucket_name):
+        return self.storage_client.get_bucket(bucket_name)
+
+    def upload_file(self, bucket_name, source_file_name, destination_blob_name):
+        bucket = self.get_bucket(bucket_name)
+        blob = bucket.blob(destination_blob_name)
+        blob.upload_from_filename(source_file_name)
+        return blob
 
 
 class BigQuery(object):
