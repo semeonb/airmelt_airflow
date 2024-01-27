@@ -42,6 +42,12 @@ class GoogleStorage(object):
         return self.storage_client.get_bucket(bucket_name)
 
     def upload_file(self, bucket_name, source_file_name, destination_blob_name):
+        """
+        :param filename: The path to the file.
+        :param bucket_name: The name of the bucket to upload to.
+        :param destination_blob_name: The name of the blob to upload to.
+        :return: The uploaded blob.
+        """
         bucket = self.get_bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
         blob.upload_from_filename(source_file_name)
