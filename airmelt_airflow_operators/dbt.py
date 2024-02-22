@@ -6,6 +6,7 @@ from cosmos import (
     RenderConfig,
 )
 from cosmos.profiles import GoogleCloudOauthProfileMapping
+from cosmos.profiles import GoogleCloudServiceAccountFileProfileMapping
 
 
 class AirflowDbtTaskGroup(DbtTaskGroup):
@@ -64,7 +65,7 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
             profile_config=ProfileConfig(
                 profile_name=dbt_profile_name,
                 target_name=target_name,
-                profile_mapping=GoogleCloudOauthProfileMapping(
+                profile_mapping=GoogleCloudServiceAccountFileProfileMapping(
                     conn_id=connection_id,
                     profile_args={
                         "project": project_id,
