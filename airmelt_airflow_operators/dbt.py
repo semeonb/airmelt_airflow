@@ -5,7 +5,6 @@ from cosmos import (
     ExecutionConfig,
     RenderConfig,
 )
-from cosmos.profiles import GoogleCloudOauthProfileMapping
 from cosmos.profiles import GoogleCloudServiceAccountFileProfileMapping
 
 
