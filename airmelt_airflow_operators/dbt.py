@@ -73,7 +73,6 @@ class AirflowDbtTaskGroup(DbtTaskGroup):
                         "project": project_id,
                         "dataset": dataset,
                         "location": location,
-                        "method": method,
                         "keyfile": keyfile,
                         "threads": threads,
                     },
