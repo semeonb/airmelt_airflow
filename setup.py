@@ -22,7 +22,7 @@ setuptools.setup(
         "apache-airflow-providers-http==4.5.0",
         "apache-airflow-providers-imap==3.3.0",
         "apache-airflow-providers-ssh==3.10.0",
-        "astronomer-cosmos==1.2.0",
+        "astronomer-cosmos==1.3.0",
         "pyYaml==6.0.1",
         "connexion==2.14.2",
         "Werkzeug==2.2.3",
