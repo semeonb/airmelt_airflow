@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="airmelt_airflow",
-    version="0.2.5",
+    version="0.2.6",
     author="Semeon Balagula @ Airmelt",
     description="Airflow Utilities",
     packages=["airmelt_airflow_operators"],
@@ -22,7 +22,7 @@ setuptools.setup(
         "apache-airflow-providers-http==4.5.0",
         "apache-airflow-providers-imap==3.3.0",
         "apache-airflow-providers-ssh==3.10.0",
-        "astronomer-cosmos==1.1.0",
+        "astronomer-cosmos==1.1.1",
         "pyYaml==6.0.1",
         "connexion==2.14.2",
         "Werkzeug==2.2.3",
