@@ -56,6 +56,16 @@ class GoogleStorage(object):
         blob.upload_from_filename(source_file_name)
         return blob
 
+    def read_blob(self, bucket_name, blob_name):
+        """
+        :param bucket_name: The name of the bucket to upload to.
+        :param blob_name: The name of the blob to upload to.
+        :return: The uploaded blob.
+        """
+        bucket = self.get_bucket(bucket_name)
+        blob = bucket.blob(blob_name)
+        return blob.download_as_string()
+
 
 class BigQuery(object):
     def __init__(self, bq_project_id: str, credentials_path=None, gcp_conn_id=None):
