@@ -350,6 +350,7 @@ class RunQuery(BaseOperator):
             self.log.info("Succesfully executed query")
         except Exception as ex:
             self.log.error("Could not qun the query: {}".format(ex))
+            raise
         result = cursor.fetchall()
         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
             result = result[0][0]
