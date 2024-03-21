@@ -207,3 +207,108 @@ class GSFile(object):
             self.gs_source = [filename + "." + file_format]
         self.full_name = self.name + "." + file_format
         self.path = "{gs_path}/{dt}".format(gs_path=gs_path, dt=dt)
+
+
+class DatesListFromRange(BaseOperator):
+    """
+    Returns a list of dates between date_from and date_to
+
+    ``date_from`` is a templated variable for this operator
+    ``date_to`` is a templated variable for this operator
+    ``cap`` is a templated variable for this operator
+
+    Parameters
+    ----------
+    date_from: str, required
+        The start date
+    date_to: str, required
+        The end date
+    cap: int, optional
+        The maximum number of dates to return
+    """
+
+    template_fields = ["date_from", "date_to", "cap"]
+
+    def __init__(self, date_from, date_to, cap=None, *args, **kwargs):
+        super(DatesListFromRange, self).__init__(*args, **kwargs)
+        self.date_from = date_from
+        self.date_to = date_to
+        self.cap = cap
+
+    def execute(self, context):
+        date_range = []
+        counter = 0
+        # Trying to extract the full date from the string
+        self.date_from = datetime.strptime(self.date_from, "%Y-%m-%d")
+        self.date_to = datetime.strptime(self.date_to, "%Y-%m-%d")
+        while self.date_from <= self.date_to:
+            if self.cap and counter == self.cap:
+                break
+            date_range.append(self.date_from.strftime("%Y-%m-%d"))
+            self.date_from += timedelta(days=1)
+            counter += 1
+        return date_range
+
+
+class ExtendedLastExecutionDate(BaseOperator):
+    """
+    The class renders last execution date, optionally substracts lookback and returns the date
+
+    ``prev_start_date_success`` is a templated variable for this operator
+    ``lookback_days`` is a templated variable for this operator
+
+    Parameters
+    ----------
+    prev_start_date_success: datetime, required
+        The last successful start date
+    lookback_days: int, optional
+        The number of days to substract from the last successful start date
+    """
+
+    template_fields = ["prev_start_date_success", "lookback_days"]
+
+    def __init__(self, prev_start_date_success, lookback_days=0, *args, **kwargs):
+        super(ExtendedLastExecutionDate, self).__init__(*args, **kwargs)
+        self.lookback_days = lookback_days
+        self.prev_start_date_success = prev_start_date_success
+
+    def execute(self, context):
+        output_date: datetime = self.prev_start_date_success - timedelta(
+            days=self.lookback_days
+        )
+        return output_date.strftime("%Y-%m-%d")
+
+
+class DeleteFilesFromTemp(BaseOperator):
+    """
+    Deletes files from Airflow /tmp folder given prefix or list of files
+    """
+
+    template_fields = ["prefix", "files_list"]
+
+    def __init__(
+        self,
+        files_list: str = None,
+        prefix: str = None,
+        temp_folder="tmp",
+        *args,
+        **kwargs,
+    ):
+        super(DeleteFilesFromTemp, self).__init__(*args, **kwargs)
+        self.files_list = files_list
+        self.prefix = prefix
+        self.temp_folder = temp_folder
+
+    def execute(self, context):
+        if self.files_list:
+            for file in self.files_list:
+                if os.path.exists(file):
+                    os.remove("/{}/{}".format(self.temp_folder, file))
+                    self.log.info("Succesfully deleted file {}".format(file))
+        elif self.prefix:
+            for file in os.listdir("/{}".format(self.temp_folder)):
+                if file.startswith(self.prefix):
+                    os.remove("/{}/{}".format(self.temp_folder, file))
+                    self.log.info("Succesfully deleted file {}".format(file))
+        else:
+            self.log.info("No files to delete")
