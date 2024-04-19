@@ -352,6 +352,7 @@ class RunQuery(BaseOperator):
                 configuration={"query": self.query, "useLegacySql": False},
                 location=self.location,
             )
+            print("The job is: ", job)
             result = job.result()
             # cursor.execute(self.query)
             # result = bq_hook.get_records(self.query)
