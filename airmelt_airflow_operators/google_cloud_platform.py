@@ -330,15 +330,18 @@ class RunQuery(BaseOperator):
     template_ext = (".sql",)
 
     @apply_defaults
-    def __init__(self, gcp_conn_id, query, scalar, *args, **kwargs):
+    def __init__(self, gcp_conn_id, query, scalar, location="US", *args, **kwargs):
         super().__init__(*args, **kwargs)
         self.query = query
         self.gcp_conn_id = gcp_conn_id
         self.scalar = scalar
+        self.location = location
 
     def execute(self, context):
         self.log.info("Executing BigQuery query...")
-        bigquery_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
+        bigquery_hook = BigQueryHook(
+            gcp_conn_id=self.gcp_conn_id, location=self.location
+        )
         result = bigquery_hook.get_records(self.query)
         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
             result = result[0][0]
