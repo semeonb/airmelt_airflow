@@ -3,7 +3,7 @@ import setuptools
 
 setuptools.setup(
     name="airmelt_airflow",
-    version="0.4.8",
+    version="0.4.9",
     author="Semeon Balagula @ Airmelt",
     description="Airflow Utilities",
     packages=["airmelt_airflow_operators"],
@@ -17,7 +17,7 @@ setuptools.setup(
         "pendulum==2.1.2",
         "mysql-connector-python==8.3.0",
         "apache-airflow-providers-ftp==3.5.0",
-        "apache-airflow-providers-google==10.6.0",
+        "apache-airflow-providers-google==10.17.0",
         "apache-airflow-providers-amazon==8.13.0",
         "apache-airflow-providers-mysql==5.5.4",
         "boto3==1.28.0",

@@ -342,6 +342,7 @@ class RunQuery(BaseOperator):
         bigquery_hook = BigQueryHook(
             gcp_conn_id=self.gcp_conn_id, location=self.location
         )
+        self.log.info("BigQuery hook created")
         job_id = bigquery_hook.insert_job(
             configuration={
                 "query": {
