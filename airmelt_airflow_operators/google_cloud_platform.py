@@ -340,7 +340,7 @@ class RunQuery(BaseOperator):
         self.location = location
 
     def execute(self, context):
-        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
+        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
         # bq_hook.run_query(self.query)
         # conn = bq_hook.get_conn()
         # cursor = conn.cursor()
@@ -348,7 +348,10 @@ class RunQuery(BaseOperator):
         try:
             self.log.info("Executing query")
             self.log.info("The query is: \n {}".format(self.query))
-            job = bq_hook.insert_job(configuration={"query": self.query})
+            job = bq_hook.insert_job(
+                configuration={"query": self.query, "useLegacySql": False},
+                location=self.location,
+            )
             result = job.result()
             # cursor.execute(self.query)
             # result = bq_hook.get_records(self.query)
