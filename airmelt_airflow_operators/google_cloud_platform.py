@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta
 import time
 from airflow.models import BaseOperator
+from airflow.utils.decorators import apply_defaults
 from airflow.providers.google.cloud.transfers.local_to_gcs import (
     LocalFilesystemToGCSOperator,
 )
@@ -314,10 +315,7 @@ class LoadQueryToTable(BaseOperator):
 
 class RunQuery(BaseOperator):
     """
-
-    This operator runs query and drops the temporary output table
-
-    ``query`` is a templated variable for this operator
+    Executes a BigQuery SQL query and returns the results as a list of tuples.
 
     Parameters
     ----------
@@ -328,34 +326,69 @@ class RunQuery(BaseOperator):
     scalar: bool, optional, default: False indicates if the query returns a single value
     """
 
-    template_fields = [
-        "query",
-    ]
+    template_fields = ("query",)
+    template_ext = (".sql",)
 
-    def __init__(self, gcp_conn_id, query, scalar, location="US", *args, **kwargs):
-        super(RunQuery, self).__init__(*args, **kwargs)
-        self.gcp_conn_id = gcp_conn_id
+    @apply_defaults
+    def __init__(self, gcp_conn_id, query, scalar, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.query = query
+        self.gcp_conn_id = gcp_conn_id
         self.scalar = scalar
-        self.location = location
 
     def execute(self, context):
-        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, location=self.location)
-        conn = bq_hook.get_conn()
-        cursor = conn.cursor()
-
-        try:
-            self.log.info("Executing query")
-            self.log.info("The query is: \n {}".format(self.query))
-            cursor.execute(self.query)
-            self.log.info("Succesfully executed query")
-        except Exception as ex:
-            self.log.error("Could not qun the query: {}".format(ex))
-            raise
-        result = cursor.fetchall()
+        self.log.info("Executing BigQuery query...")
+        bigquery_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
+        result = bigquery_hook.get_records(self.query)
         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
             result = result[0][0]
         return result
+
+
+# class RunQuery(BaseOperator):
+#     """
+
+#     This operator runs query and drops the temporary output table
+
+#     ``query`` is a templated variable for this operator
+
+#     Parameters
+#     ----------
+#     gcp_conn_id: str, required
+#         The connection id for big query
+#     query: str, required
+#         Query to run
+#     scalar: bool, optional, default: False indicates if the query returns a single value
+#     """
+
+#     template_fields = [
+#         "query",
+#     ]
+
+#     def __init__(self, gcp_conn_id, query, scalar, location="US", *args, **kwargs):
+#         super(RunQuery, self).__init__(*args, **kwargs)
+#         self.gcp_conn_id = gcp_conn_id
+#         self.query = query
+#         self.scalar = scalar
+#         self.location = location
+
+#     def execute(self, context):
+#         bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, location=self.location)
+#         conn = bq_hook.get_conn()
+#         cursor = conn.cursor()
+
+#         try:
+#             self.log.info("Executing query")
+#             self.log.info("The query is: \n {}".format(self.query))
+#             cursor.execute(self.query)
+#             self.log.info("Succesfully executed query")
+#         except Exception as ex:
+#             self.log.error("Could not qun the query: {}".format(ex))
+#             raise
+#         result = cursor.fetchall()
+#         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
+#             result = result[0][0]
+#         return result
 
 
 class WaitForValueBigQueryOperator(BaseOperator):
