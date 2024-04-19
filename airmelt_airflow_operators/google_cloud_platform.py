@@ -340,18 +340,19 @@ class RunQuery(BaseOperator):
 
     def execute(self, context):
         bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
-        conn = bq_hook.get_conn()
-        cursor = conn.cursor()
+        # conn = bq_hook.get_conn()
+        # cursor = conn.cursor()
 
         try:
             self.log.info("Executing query")
             self.log.info("The query is: \n {}".format(self.query))
-            cursor.execute(self.query)
+            # cursor.execute(self.query)
+            result = bq_hook.get_records(self.query)
             self.log.info("Succesfully executed query")
         except Exception as ex:
             self.log.error("Could not qun the query: {}".format(ex))
             raise
-        result = cursor.fetchall()
+        # result = cursor.fetchall()
         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
             result = result[0][0]
         return result
