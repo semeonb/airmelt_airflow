@@ -342,6 +342,20 @@ class RunQuery(BaseOperator):
         bigquery_hook = BigQueryHook(
             gcp_conn_id=self.gcp_conn_id, location=self.location
         )
+        job_id = bigquery_hook.insert_job(
+            configuration={
+                "query": {
+                    "query": self.query,
+                    "useLegacySql": False,
+                }  # Use Standard SQL
+            },
+            location=self.location,  # Specify the location for the job
+        )
+        self.log.info("BigQuery query job submitted. Job ID: %s", job_id)
+
+        # Wait for the job to complete
+        bigquery_hook.poll_job_complete(job_id)
+
         result = bigquery_hook.get_records(self.query)
         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
             result = result[0][0]
