@@ -347,7 +347,7 @@ class RunQuery(BaseOperator):
         try:
             self.log.info("Executing query")
             self.log.info("The query is: \n {}".format(self.query))
-            cursor.execute(self.query, parameters={"location": self.location})
+            cursor.execute(self.query)
             self.log.info("Succesfully executed query")
         except Exception as ex:
             self.log.error("Could not qun the query: {}".format(ex))
