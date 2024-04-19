@@ -340,8 +340,8 @@ class RunQuery(BaseOperator):
         self.location = location
 
     def execute(self, context):
-        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id)
-        bq_hook.run_query(self.query)
+        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, location=self.location)
+        bq_hook.run_query(self.query, location=self.location)
         conn = bq_hook.get_conn()
         cursor = conn.cursor()
 
@@ -349,7 +349,6 @@ class RunQuery(BaseOperator):
             self.log.info("Executing query")
             self.log.info("The query is: \n {}".format(self.query))
             cursor.execute(self.query)
-            result = bq_hook.get_records(self.query)
             self.log.info("Succesfully executed query")
         except Exception as ex:
             self.log.error("Could not qun the query: {}".format(ex))
