@@ -3,7 +3,6 @@ import logging
 from datetime import datetime, timedelta
 import time
 from airflow.models import BaseOperator
-from airflow.utils.decorators import apply_defaults
 from airflow.providers.google.cloud.transfers.local_to_gcs import (
     LocalFilesystemToGCSOperator,
 )
@@ -313,56 +312,6 @@ class LoadQueryToTable(BaseOperator):
             raise
 
 
-# class RunQuery(BaseOperator):
-#     """
-#     Executes a BigQuery SQL query and returns the results as a list of tuples.
-
-#     Parameters
-#     ----------
-#     gcp_conn_id: str, required
-#         The connection id for big query
-#     query: str, required
-#         Query to run
-#     scalar: bool, optional, default: False indicates if the query returns a single value
-#     """
-
-#     template_fields = ("query",)
-#     template_ext = (".sql",)
-
-#     @apply_defaults
-#     def __init__(self, gcp_conn_id, query, scalar, location="US", *args, **kwargs):
-#         super().__init__(*args, **kwargs)
-#         self.query = query
-#         self.gcp_conn_id = gcp_conn_id
-#         self.scalar = scalar
-#         self.location = location
-
-#     def execute(self, context):
-#         self.log.info("Executing BigQuery query...")
-#         bigquery_hook = BigQueryHook(
-#             gcp_conn_id=self.gcp_conn_id, location=self.location
-#         )
-#         self.log.info("BigQuery hook created")
-#         job_id = bigquery_hook.insert_job(
-#             configuration={
-#                 "query": {
-#                     "query": self.query,
-#                     "useLegacySql": False,
-#                 }  # Use Standard SQL
-#             },
-#             location=self.location,  # Specify the location for the job
-#         )
-#         self.log.info("BigQuery query job submitted. Job ID: %s", job_id)
-
-#         # Wait for the job to complete
-#         bigquery_hook.poll_job_complete(job_id)
-
-#         result = bigquery_hook.get_records(self.query)
-#         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
-#             result = result[0][0]
-#         return result
-
-
 class RunQuery(BaseOperator):
     """
 
@@ -383,15 +332,14 @@ class RunQuery(BaseOperator):
         "query",
     ]
 
-    def __init__(self, gcp_conn_id, query, scalar, location="US", *args, **kwargs):
+    def __init__(self, gcp_conn_id, query, scalar, *args, **kwargs):
         super(RunQuery, self).__init__(*args, **kwargs)
         self.gcp_conn_id = gcp_conn_id
         self.query = query
         self.scalar = scalar
-        self.location = location
 
     def execute(self, context):
-        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, location=self.location)
+        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
         conn = bq_hook.get_conn()
         cursor = conn.cursor()
 
