@@ -332,14 +332,17 @@ class RunQuery(BaseOperator):
         "query",
     ]
 
-    def __init__(self, gcp_conn_id, query, scalar, *args, **kwargs):
+    def __init__(self, gcp_conn_id, query, scalar, location="US", *args, **kwargs):
         super(RunQuery, self).__init__(*args, **kwargs)
         self.gcp_conn_id = gcp_conn_id
         self.query = query
         self.scalar = scalar
+        self.location = location
 
     def execute(self, context):
-        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
+        bq_hook = BigQueryHook(
+            gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False, location=self.location
+        )
         # conn = bq_hook.get_conn()
         # cursor = conn.cursor()
 
