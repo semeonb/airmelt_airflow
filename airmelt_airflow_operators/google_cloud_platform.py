@@ -332,17 +332,18 @@ class RunQuery(BaseOperator):
         "query",
     ]
 
-    def __init__(self, gcp_conn_id, query, scalar, *args, **kwargs):
+    def __init__(self, gcp_conn_id, query, scalar, bq_project_id=None, *args, **kwargs):
         super(RunQuery, self).__init__(*args, **kwargs)
         self.gcp_conn_id = gcp_conn_id
         self.query = query
         self.scalar = scalar
+        self.bq_project_id = bq_project_id
 
     def execute(self, context):
         bq_hook = BigQueryHook(
             gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False, location="US"
         )
-        client = bq_hook.get_client(project_id=self.gcp_conn_id, location="US")
+        client = bq_hook.get_client(project_id=self.bq_project_id, location="US")
 
         try:
             self.log.info("Executing query")
