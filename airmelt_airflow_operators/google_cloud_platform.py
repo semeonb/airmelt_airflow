@@ -354,6 +354,7 @@ class RunQuery(BaseOperator):
             self.log.error("Could not qun the query: {}".format(ex))
             raise
         result = query_job.result()
+        result = list(result)
         if len(result) == 1 and len(result[0]) == 1 and self.scalar:
             result = result[0][0]
         return result
