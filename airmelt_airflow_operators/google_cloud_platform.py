@@ -339,7 +339,9 @@ class RunQuery(BaseOperator):
         self.scalar = scalar
 
     def execute(self, context):
-        bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
+        bq_hook = BigQueryHook(
+            gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False, location="US"
+        )
         conn = bq_hook.get_conn()
         cursor = conn.cursor()
 
