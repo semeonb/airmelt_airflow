@@ -388,6 +388,8 @@ class WaitForValueBigQueryOperator(BaseOperator):
         timeout=60,
         desired_value=1,
         retry_delay=10,
+        bq_project_id=None,
+        location="US",
         *args,
         **kwargs,
     ):
@@ -397,6 +399,8 @@ class WaitForValueBigQueryOperator(BaseOperator):
         self.timeout = timeout
         self.desired_value = desired_value
         self.retry_delay = retry_delay
+        self.bq_project_id = bq_project_id
+        self.location = location
 
     def execute(self, context):
         start_time = datetime.now()
@@ -408,14 +412,22 @@ class WaitForValueBigQueryOperator(BaseOperator):
         while datetime.now() < end_time:
             # Run the query using BigQueryHook
             bq_hook = BigQueryHook(gcp_conn_id=self.gcp_conn_id, use_legacy_sql=False)
-            conn = bq_hook.get_conn()
-            cursor = conn.cursor()
-            cursor.execute(self.sql)
-            result = cursor.fetchone()
+            try:
+                client = bq_hook.get_client(
+                    project_id=self.bq_project_id, location=self.location
+                )
+                query_job = client.query(self.sql)
+                self.log.info("Succesfully executed query")
+            except Exception as ex:
+                self.log.error("Could not qun the query: {}".format(ex))
+                raise
+            result = query_job.result()
+            result = list(result)
+            result = result[0][0]
 
-            self.log.info("The result is: \n {}".format(result[0]))
+            self.log.info("The result is: \n {}".format(result))
 
-            if result[0] == self.desired_value:
+            if result == self.desired_value:
                 success = True
                 break
 
