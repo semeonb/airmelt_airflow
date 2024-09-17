@@ -37,3 +37,17 @@ MANIFEST
 pip-log.txt
 pip-delete-this-directory.txt
 
+.git
+.env
+.DS_Store # macOS specific ignore
+airflow_settings.yaml
+__pycache__/
+astro
+/include
+include/
+logs/
+/logs
+docker-compose.yaml
+./logs
+/dags/dbt/logs
+.vscode
