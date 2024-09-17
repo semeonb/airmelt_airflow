@@ -50,4 +50,5 @@ logs/
 docker-compose.yaml
 ./logs
 /dags/dbt/logs
-.vscode
+/.vscode/*
+/.vscode
