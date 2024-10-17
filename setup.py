@@ -14,7 +14,7 @@ setuptools.setup(
         "Flask-SQLAlchemy==2.5.1",
         "Flask-Session==0.5.0",
         "apache-airflow==2.10.1",
-        "pendulum==2.1.2",
+        "pendulum==3.0.0",
         "mysql-connector-python==8.3.0",
         "apache-airflow-providers-ftp==3.5.0",
         "apache-airflow-providers-google==10.6.0",
